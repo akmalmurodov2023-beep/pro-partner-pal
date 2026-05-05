@@ -312,6 +312,26 @@ function Field({ label, children, className }: { label: string; children: React.
   );
 }
 
+function FileUploadField({ path, onChange, onClear }: { path: string | null | undefined; onChange: (e: React.ChangeEvent<HTMLInputElement>) => void; onClear: () => void }) {
+  const { t } = useTranslation();
+  return (
+    <div className="flex items-center gap-2 flex-wrap">
+      <label className="inline-flex items-center gap-2 cursor-pointer text-sm border rounded px-3 py-1.5 hover:bg-muted">
+        <Upload className="h-4 w-4" />{t("upload")}
+        <input type="file" className="hidden" onChange={onChange} />
+      </label>
+      {path && (
+        <>
+          <Button type="button" size="sm" variant="outline" onClick={() => openFile(path)}>
+            <FileText className="h-3 w-3 mr-1" />{t("view")}
+          </Button>
+          <Button type="button" size="icon" variant="ghost" onClick={onClear}><X className="h-4 w-4" /></Button>
+        </>
+      )}
+    </div>
+  );
+}
+
 function LinkGroup({ icon: Icon, label, values, onChange }: { icon: any; label: string; values: string[]; onChange: (v: string[]) => void }) {
   const { t } = useTranslation();
   return (
