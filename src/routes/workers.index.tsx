@@ -11,8 +11,10 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Plus, Pencil, Trash2, Tag, X, Upload, FileText, Instagram, Send, Bot, Youtube, Globe, Link2 } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
+import { Avatar, AvatarImage, AvatarFallback } from "@/components/ui/avatar";
+import { AvatarCropper } from "@/components/AvatarCropper";
 import { supabase } from "@/integrations/supabase/client";
-import { uploadFile, openFile } from "@/lib/storage";
+import { uploadFile, openFile, getSignedUrls } from "@/lib/storage";
 import { toast } from "sonner";
 
 export const Route = createFileRoute("/workers/")({ component: () => <AppLayout><WorkersPage /></AppLayout> });
@@ -20,6 +22,7 @@ export const Route = createFileRoute("/workers/")({ component: () => <AppLayout>
 type Worker = {
   id: string;
   full_name: string;
+  avatar_url: string | null;
   passport_series_number: string | null;
   passport_number: string | null;
   birth_date: string | null;
@@ -51,7 +54,7 @@ type SocialAssets = {
 const emptySocial: SocialAssets = { instagram: [], telegram: [], telegram_bot: [], youtube: [], website: [], other: [] };
 
 const empty: Partial<Worker> = {
-  full_name: "", passport_series_number: "", passport_number: "", birth_date: "", plastic_card_info: "", phone_number: "",
+  full_name: "", avatar_url: "", passport_series_number: "", passport_number: "", birth_date: "", plastic_card_info: "", phone_number: "",
   telegram_username: "", position: "", residence_address: "", temp_living_addresses: [],
   residence_file_url: "", passport_front_url: "", passport_back_url: "",
   e_signature_file_url: "", e_signature_password: "",
@@ -85,6 +88,8 @@ function WorkersPage() {
   const [tempAddrs, setTempAddrs] = useState("");
   const [social, setSocial] = useState<SocialAssets>(emptySocial);
   const [newPromo, setNewPromo] = useState("");
+  const [avatarUrls, setAvatarUrls] = useState<Record<string, string>>({});
+  const [cropFile, setCropFile] = useState<File | null>(null);
 
   const load = async () => {
     const [w, p] = await Promise.all([
@@ -93,6 +98,8 @@ function WorkersPage() {
     ]);
     if (w.data) setRows(w.data as Worker[]);
     if (p.data) setPromos(p.data as Promo[]);
+    const paths = (w.data || []).map((x: any) => x.avatar_url).filter(Boolean) as string[];
+    if (paths.length) setAvatarUrls(await getSignedUrls(paths));
   };
   useEffect(() => { load(); }, []);
 
@@ -113,6 +120,7 @@ function WorkersPage() {
     if (!editing?.full_name) { toast.error(t("error")); return; }
     const payload = {
       full_name: editing.full_name,
+      avatar_url: editing.avatar_url || null,
       passport_series_number: editing.passport_series_number || null,
       passport_number: editing.passport_number || null,
       birth_date: editing.birth_date || null,
@@ -177,6 +185,19 @@ function WorkersPage() {
     } catch (err: any) { toast.error(err.message); }
   };
 
+  const onCropDone = async (blob: Blob) => {
+    if (!editing) return;
+    try {
+      const file = new File([blob], "avatar.jpg", { type: "image/jpeg" });
+      const path = await uploadFile("workers/avatar", file);
+      setEditing({ ...editing, avatar_url: path } as any);
+      const u = await getSignedUrls([path]);
+      setAvatarUrls((prev) => ({ ...prev, ...u }));
+      setCropFile(null);
+      toast.success(t("saved"));
+    } catch (err: any) { toast.error(err.message); }
+  };
+
   return (
     <div>
       <PageHeader title={t("workers")} action={
@@ -203,7 +224,15 @@ function WorkersPage() {
             )}
             {filtered.map(w => (
               <TableRow key={w.id} className="cursor-pointer" onClick={() => navigate({ to: "/workers/$workerId", params: { workerId: w.id } })}>
-                <TableCell className="font-medium">{w.full_name}</TableCell>
+                <TableCell className="font-medium">
+                  <div className="flex items-center gap-3">
+                    <Avatar className="h-9 w-9">
+                      {w.avatar_url && avatarUrls[w.avatar_url] && <AvatarImage src={avatarUrls[w.avatar_url]} alt={w.full_name} />}
+                      <AvatarFallback>{(w.full_name || "?").charAt(0).toUpperCase()}</AvatarFallback>
+                    </Avatar>
+                    <span>{w.full_name}</span>
+                  </div>
+                </TableCell>
                 <TableCell>{w.position}</TableCell>
                 <TableCell>{w.phone_number}</TableCell>
                 <TableCell>{w.telegram_username}</TableCell>
@@ -226,6 +255,23 @@ function WorkersPage() {
           <DialogHeader><DialogTitle>{editing?.id ? t("edit") : t("add")} — {t("workers")}</DialogTitle></DialogHeader>
           {editing && (
             <div className="grid grid-cols-2 gap-4">
+              <div className="col-span-2 flex items-center gap-4">
+                <Avatar className="h-20 w-20">
+                  {editing.avatar_url && <AvatarImage src={avatarUrls[editing.avatar_url] || ""} alt="avatar" />}
+                  <AvatarFallback>{(editing.full_name || "?").charAt(0).toUpperCase()}</AvatarFallback>
+                </Avatar>
+                <div>
+                  <label className="inline-flex items-center gap-2 cursor-pointer text-sm border rounded px-3 py-1.5 hover:bg-muted">
+                    <Upload className="h-4 w-4" />Profil rasmi
+                    <input type="file" accept="image/*" className="hidden" onChange={(e) => { const f = e.target.files?.[0]; if (f) setCropFile(f); e.target.value = ""; }} />
+                  </label>
+                  {editing.avatar_url && (
+                    <Button type="button" size="sm" variant="ghost" onClick={() => setEditing({ ...editing, avatar_url: "" })} className="ml-2">
+                      <X className="h-4 w-4" />
+                    </Button>
+                  )}
+                </div>
+              </div>
               <Field label={t("full_name") + " *"}><Input value={editing.full_name || ""} onChange={(e) => setEditing({ ...editing, full_name: e.target.value })} /></Field>
               <Field label={t("birth_date")}><Input type="date" value={editing.birth_date || ""} onChange={(e) => setEditing({ ...editing, birth_date: e.target.value })} /></Field>
               <Field label={t("position")}><Input value={editing.position || ""} onChange={(e) => setEditing({ ...editing, position: e.target.value })} /></Field>
@@ -299,6 +345,7 @@ function WorkersPage() {
           </DialogFooter>
         </DialogContent>
       </Dialog>
+      <AvatarCropper open={!!cropFile} file={cropFile} onCancel={() => setCropFile(null)} onDone={onCropDone} />
     </div>
   )
 }
