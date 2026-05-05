@@ -69,6 +69,7 @@ function MonthDetailPage() {
 
   const filtered = rows
     .map((r: any, i: number) => ({ row: r, idx: i }))
+    .sort((a, b) => (Number(b.row.results) || 0) - (Number(a.row.results) || 0))
     .filter(({ row }) => {
       const q = search.trim().toLowerCase();
       if (!q) return true;
