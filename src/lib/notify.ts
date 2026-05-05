@@ -77,8 +77,8 @@ export async function notifyPaymentConfirmed(opts: {
   const text =
     `🎉  <b>Tabriklaymiz, ${w.full_name}!</b> 🎉\n\n` +
     `👤 Sizga <b>${MONTHS_FULL[opts.month - 1]}</b> oyi uchun <b>${projectName}</b> uchun to'lov tasdiqlandi ✅\n\n` +
-    `🕔 Vaqt: ${time}\n\n` +
-    `💰 Umumiy miqdor: <b>${fmtNum(opts.amount)}</b> so'm\n\n` +
+    `🕔 Vaqt: ${time}\n` +
+    `💰 Umumiy miqdor: <b>${fmtNum(opts.amount)}</b> so'm\n` +
     `🏁 Reyting: <b>${rank}</b> o'rin`;
   await sendTelegramMessage({ data: { chat_id: w.telegram_id, text } });
 }
