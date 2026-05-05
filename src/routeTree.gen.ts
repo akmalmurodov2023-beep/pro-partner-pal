@@ -17,6 +17,7 @@ import { Route as LoginRouteImport } from './routes/login'
 import { Route as ClientsRouteImport } from './routes/clients'
 import { Route as IndexRouteImport } from './routes/index'
 import { Route as ClientsClientIdRouteImport } from './routes/clients.$clientId'
+import { Route as ProjectsRouteImport } from './routes/projects.'
 
 const WorkersRoute = WorkersRouteImport.update({
   id: '/workers',
@@ -58,15 +59,21 @@ const ClientsClientIdRoute = ClientsClientIdRouteImport.update({
   path: '/$clientId',
   getParentRoute: () => ClientsRoute,
 } as any)
+const ProjectsRoute = ProjectsRouteImport.update({
+  id: '/',
+  path: '/',
+  getParentRoute: () => ProjectsRoute,
+} as any)
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
   '/clients': typeof ClientsRouteWithChildren
   '/login': typeof LoginRoute
   '/payments': typeof PaymentsRoute
-  '/projects': typeof ProjectsRoute
+  '/projects': typeof ProjectsRouteWithChildren
   '/reports': typeof ReportsRoute
   '/workers': typeof WorkersRoute
+  '/projects/': typeof ProjectsRoute
   '/clients/$clientId': typeof ClientsClientIdRoute
 }
 export interface FileRoutesByTo {
@@ -74,9 +81,9 @@ export interface FileRoutesByTo {
   '/clients': typeof ClientsRouteWithChildren
   '/login': typeof LoginRoute
   '/payments': typeof PaymentsRoute
-  '/projects': typeof ProjectsRoute
   '/reports': typeof ReportsRoute
   '/workers': typeof WorkersRoute
+  '/projects': typeof ProjectsRoute
   '/clients/$clientId': typeof ClientsClientIdRoute
 }
 export interface FileRoutesById {
@@ -85,9 +92,10 @@ export interface FileRoutesById {
   '/clients': typeof ClientsRouteWithChildren
   '/login': typeof LoginRoute
   '/payments': typeof PaymentsRoute
-  '/projects': typeof ProjectsRoute
+  '/projects': typeof ProjectsRouteWithChildren
   '/reports': typeof ReportsRoute
   '/workers': typeof WorkersRoute
+  '/projects/': typeof ProjectsRoute
   '/clients/$clientId': typeof ClientsClientIdRoute
 }
 export interface FileRouteTypes {
@@ -100,6 +108,7 @@ export interface FileRouteTypes {
     | '/projects'
     | '/reports'
     | '/workers'
+    | '/projects/'
     | '/clients/$clientId'
   fileRoutesByTo: FileRoutesByTo
   to:
@@ -107,9 +116,9 @@ export interface FileRouteTypes {
     | '/clients'
     | '/login'
     | '/payments'
-    | '/projects'
     | '/reports'
     | '/workers'
+    | '/projects'
     | '/clients/$clientId'
   id:
     | '__root__'
@@ -120,6 +129,7 @@ export interface FileRouteTypes {
     | '/projects'
     | '/reports'
     | '/workers'
+    | '/projects/'
     | '/clients/$clientId'
   fileRoutesById: FileRoutesById
 }
@@ -128,7 +138,7 @@ export interface RootRouteChildren {
   ClientsRoute: typeof ClientsRouteWithChildren
   LoginRoute: typeof LoginRoute
   PaymentsRoute: typeof PaymentsRoute
-  ProjectsRoute: typeof ProjectsRoute
+  ProjectsRoute: typeof ProjectsRouteWithChildren
   ReportsRoute: typeof ReportsRoute
   WorkersRoute: typeof WorkersRoute
 }
@@ -191,6 +201,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof ClientsClientIdRouteImport
       parentRoute: typeof ClientsRoute
     }
+    '/projects/': {
+      id: '/projects/'
+      path: '/'
+      fullPath: '/projects/'
+      preLoaderRoute: typeof ProjectsRouteImport
+      parentRoute: typeof ProjectsRoute
+    }
   }
 }
 
@@ -205,12 +222,24 @@ const ClientsRouteChildren: ClientsRouteChildren = {
 const ClientsRouteWithChildren =
   ClientsRoute._addFileChildren(ClientsRouteChildren)
 
+interface ProjectsRouteChildren {
+  ProjectsRoute: typeof ProjectsRoute
+}
+
+const ProjectsRouteChildren: ProjectsRouteChildren = {
+  ProjectsRoute: ProjectsRoute,
+}
+
+const ProjectsRouteWithChildren = ProjectsRoute._addFileChildren(
+  ProjectsRouteChildren,
+)
+
 const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
   ClientsRoute: ClientsRouteWithChildren,
   LoginRoute: LoginRoute,
   PaymentsRoute: PaymentsRoute,
-  ProjectsRoute: ProjectsRoute,
+  ProjectsRoute: ProjectsRouteWithChildren,
   ReportsRoute: ReportsRoute,
   WorkersRoute: WorkersRoute,
 }
