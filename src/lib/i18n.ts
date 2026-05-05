@@ -83,6 +83,10 @@ const resources = {
       confirm_delete: "Rostan o'chirilsinmi?",
       welcome: "Xush kelibsiz",
       language: "Til",
+      settings: "Sozlamalar",
+      section: "Bo'lim",
+      back: "Orqaga",
+      manage_months: "Oylarni boshqarish",
     },
   },
   ru: {
@@ -166,6 +170,10 @@ const resources = {
       confirm_delete: "Действительно удалить?",
       welcome: "Добро пожаловать",
       language: "Язык",
+      settings: "Настройки",
+      section: "Раздел",
+      back: "Назад",
+      manage_months: "Управление месяцами",
     },
   },
 };
