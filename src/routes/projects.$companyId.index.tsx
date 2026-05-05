@@ -55,7 +55,7 @@ function CompanyIndex() {
         </Card>
       )}
 
-      <div className="border rounded-lg bg-card overflow-hidden">
+      <div className="border bg-card overflow-hidden">
         <Table>
           <TableHeader>
             <TableRow>
