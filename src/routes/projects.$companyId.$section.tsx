@@ -2,7 +2,7 @@ import { createFileRoute, Link, notFound } from "@tanstack/react-router";
 import { useTranslation } from "react-i18next";
 import { ArrowLeft } from "lucide-react";
 import { PageHeader } from "@/components/PageHeader";
-import { CpaTab, PaymentsTab, DocsTab, TelegramTab, SettingsTab } from "@/components/company/sections";
+import { CpaTab, PaymentsTab, DocsTab, TelegramTab, SettingsTab, ProjectWorkersTab } from "@/components/company/sections";
 
 export const Route = createFileRoute("/projects/$companyId/$section")({
   component: SectionPage,
@@ -14,6 +14,7 @@ function SectionPage() {
 
   const titleKey: Record<string, string> = {
     cpa: "cpa_results",
+    workers: "workers",
     payments: "payments",
     contracts: "contracts",
     invoices: "invoices",
@@ -29,6 +30,7 @@ function SectionPage() {
       </Link>
       <PageHeader title={t(titleKey[section])} />
       {section === "cpa" && <CpaTab clientId={companyId} />}
+      {section === "workers" && <ProjectWorkersTab clientId={companyId} />}
       {section === "payments" && <PaymentsTab clientId={companyId} />}
       {section === "contracts" && <DocsTab clientId={companyId} kind="contract" />}
       {section === "invoices" && <DocsTab clientId={companyId} kind="invoice" />}
