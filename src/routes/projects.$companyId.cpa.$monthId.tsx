@@ -1,7 +1,7 @@
 import { useEffect, useState } from "react";
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { useTranslation } from "react-i18next";
-import { ArrowLeft, Check, X, Download, Plus, Search, Trash2 } from "lucide-react";
+import { ArrowLeft, Check, X, Download, Plus, Search, Trash2, Upload } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -10,7 +10,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { PageHeader } from "@/components/PageHeader";
 import { supabase } from "@/integrations/supabase/client";
-import { openFile } from "@/lib/storage";
+import { openFile, uploadFile } from "@/lib/storage";
 import { MONTHS } from "@/components/company/sections";
 import { toast } from "sonner";
 
@@ -137,6 +137,30 @@ function MonthDetailPage() {
               <Download className="h-3 w-3 mr-1" />File {i + 1}
             </Button>
           ))}
+          <label>
+            <input
+              type="file"
+              className="hidden"
+              onChange={async (e) => {
+                const f = e.target.files?.[0];
+                if (!f) return;
+                try {
+                  const path = await uploadFile(`monthly_results/${monthId}`, f);
+                  const next = [...docs, path];
+                  const { error } = await supabase.from("monthly_results").update({ uploaded_docs_urls: next }).eq("id", monthId);
+                  if (error) throw error;
+                  setMonth({ ...month, uploaded_docs_urls: next });
+                  toast.success(t("saved"));
+                } catch (err: any) {
+                  toast.error(err.message);
+                }
+                e.target.value = "";
+              }}
+            />
+            <Button size="sm" variant="outline" asChild>
+              <span className="cursor-pointer"><Upload className="h-3 w-3 mr-1" />{t("upload")}</span>
+            </Button>
+          </label>
         </div>
       </div>
 
