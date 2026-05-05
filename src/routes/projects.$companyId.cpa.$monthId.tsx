@@ -50,12 +50,17 @@ function MonthDetailPage() {
       const end = `${m.year}-${pad(m.month)}-${pad(last)}`;
       const [p, w] = await Promise.all([
         supabase.from("payments").select("*").eq("client_id", companyId).gte("payment_date", start).lte("payment_date", end),
-        supabase.from("project_workers").select("worker_id, promo_code, workers(id, full_name)").eq("client_id", companyId),
+        supabase.from("project_workers").select("worker_id, promo_code").eq("client_id", companyId),
       ]);
       setPayments(p.data || []);
-      setWorkers((w.data || [])
-        .filter((r: any) => r.workers)
-        .map((r: any) => ({ ...r.workers, promo_code: r.promo_code })));
+      const ids = (w.data || []).map((r: any) => r.worker_id);
+      let workersList: any[] = [];
+      if (ids.length) {
+        const { data: ws } = await supabase.from("workers").select("id, full_name").in("id", ids);
+        const promoMap = new Map((w.data || []).map((r: any) => [r.worker_id, r.promo_code]));
+        workersList = (ws || []).map(x => ({ ...x, promo_code: promoMap.get(x.id) || "" }));
+      }
+      setWorkers(workersList);
       setLoading(false);
     })();
   }, [monthId, companyId]);
