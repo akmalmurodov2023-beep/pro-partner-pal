@@ -14,8 +14,126 @@ import { supabase } from "@/integrations/supabase/client";
 import { uploadFile, openFile, getSignedUrl } from "@/lib/storage";
 import { toast } from "sonner";
 import JSZip from "jszip";
+import { notifyAddedToProject, notifyRemovedFromProject } from "@/lib/notify";
 
 export const MONTHS = ["Yan", "Fev", "Mart", "Apr", "May", "Iyun", "Iyul", "Avg", "Sen", "Okt", "Noy", "Dek"];
+
+// ============ PROJECT WORKERS ============
+export function ProjectWorkersTab({ clientId }: { clientId: string }) {
+  const { t } = useTranslation();
+  const [linked, setLinked] = useState<any[]>([]);
+  const [allWorkers, setAllWorkers] = useState<any[]>([]);
+  const [open, setOpen] = useState(false);
+  const [selectedId, setSelectedId] = useState<string>("");
+
+  const load = async () => {
+    const { data: links } = await supabase
+      .from("project_workers")
+      .select("id, worker_id, created_at")
+      .eq("client_id", clientId)
+      .order("created_at", { ascending: false });
+    const { data: workers } = await supabase
+      .from("workers")
+      .select("id, full_name, telegram_id");
+    setLinked(links || []);
+    setAllWorkers(workers || []);
+  };
+  useEffect(() => { load(); }, [clientId]);
+
+  const linkedIds = new Set(linked.map(l => l.worker_id));
+  const available = allWorkers.filter(w => !linkedIds.has(w.id));
+
+  const add = async () => {
+    if (!selectedId) return;
+    const { error } = await supabase
+      .from("project_workers")
+      .insert({ client_id: clientId, worker_id: selectedId });
+    if (error) return toast.error(error.message);
+    notifyAddedToProject(selectedId, clientId).catch(() => {});
+    toast.success(t("saved"));
+    setOpen(false);
+    setSelectedId("");
+    load();
+  };
+
+  const remove = async (link: any) => {
+    if (!confirm(t("confirm_delete"))) return;
+    const { error } = await supabase
+      .from("project_workers")
+      .delete()
+      .eq("id", link.id);
+    if (error) return toast.error(error.message);
+    notifyRemovedFromProject(link.worker_id, clientId).catch(() => {});
+    toast.success(t("deleted"));
+    load();
+  };
+
+  const nameOf = (id: string) => allWorkers.find(w => w.id === id)?.full_name || "—";
+
+  return (
+    <div>
+      <div className="flex justify-end mb-3">
+        <Button onClick={() => setOpen(true)}>
+          <Plus className="h-4 w-4 mr-2" />{t("add")}
+        </Button>
+      </div>
+      <div className="border bg-card overflow-x-auto">
+        <Table>
+          <TableHeader>
+            <TableRow>
+              <TableHead>{t("worker")}</TableHead>
+              <TableHead>Telegram</TableHead>
+              <TableHead className="text-right">{t("actions")}</TableHead>
+            </TableRow>
+          </TableHeader>
+          <TableBody>
+            {linked.length === 0 ? (
+              <TableRow><TableCell colSpan={3} className="text-center text-muted-foreground py-6">{t("no_data")}</TableCell></TableRow>
+            ) : linked.map(l => {
+              const w = allWorkers.find(x => x.id === l.worker_id);
+              return (
+                <TableRow key={l.id}>
+                  <TableCell className="font-medium">{nameOf(l.worker_id)}</TableCell>
+                  <TableCell className="text-muted-foreground">{w?.telegram_id || "—"}</TableCell>
+                  <TableCell className="text-right">
+                    <Button size="icon" variant="ghost" onClick={() => remove(l)}>
+                      <Trash2 className="h-4 w-4 text-destructive" />
+                    </Button>
+                  </TableCell>
+                </TableRow>
+              );
+            })}
+          </TableBody>
+        </Table>
+      </div>
+
+      <Dialog open={open} onOpenChange={setOpen}>
+        <DialogContent>
+          <DialogHeader><DialogTitle>{t("add")}</DialogTitle></DialogHeader>
+          <div className="space-y-3">
+            <div>
+              <Label>{t("worker")}</Label>
+              <Select value={selectedId} onValueChange={setSelectedId}>
+                <SelectTrigger><SelectValue placeholder={t("select_blogger")} /></SelectTrigger>
+                <SelectContent>
+                  {available.length === 0 ? (
+                    <div className="px-3 py-2 text-sm text-muted-foreground">—</div>
+                  ) : available.map(w => (
+                    <SelectItem key={w.id} value={w.id}>{w.full_name}</SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+          </div>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setOpen(false)}>{t("cancel")}</Button>
+            <Button onClick={add} disabled={!selectedId}>{t("save")}</Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+    </div>
+  );
+}
 
 // ============ CPA RESULTS ============
 export function CpaTab({ clientId }: { clientId: string }) {
