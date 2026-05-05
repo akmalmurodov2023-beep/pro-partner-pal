@@ -94,6 +94,11 @@ const resources = {
       bloggers: "Blogerlar",
       promocode: "Promokod",
       paid: "To'langan",
+      add_entry: "Kiritish",
+      select_blogger: "Bloger tanlang",
+      paid_status: "To'lov holati",
+      paid_yes: "To'landi",
+      paid_no: "Qarzdorlik",
     },
   },
   ru: {
@@ -188,6 +193,11 @@ const resources = {
       bloggers: "Блогеры",
       promocode: "Промокод",
       paid: "Оплачено",
+      add_entry: "Добавить",
+      select_blogger: "Выберите блогера",
+      paid_status: "Статус оплаты",
+      paid_yes: "Оплачено",
+      paid_no: "Задолженность",
     },
   },
 };
