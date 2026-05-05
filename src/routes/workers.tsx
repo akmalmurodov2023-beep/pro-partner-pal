@@ -21,13 +21,17 @@ type Worker = {
   id: string;
   full_name: string;
   passport_series_number: string | null;
+  passport_number: string | null;
+  birth_date: string | null;
   plastic_card_info: string | null;
   phone_number: string | null;
   telegram_username: string | null;
   position: string | null;
   residence_address: string | null;
+  residence_file_url: string | null;
+  passport_front_url: string | null;
+  passport_back_url: string | null;
   temp_living_addresses: string[] | null;
-  e_signature_key: string | null;
   e_signature_file_url: string | null;
   e_signature_password: string | null;
   social_media_assets: any;
@@ -47,11 +51,28 @@ type SocialAssets = {
 const emptySocial: SocialAssets = { instagram: [], telegram: [], telegram_bot: [], youtube: [], website: [], other: [] };
 
 const empty: Partial<Worker> = {
-  full_name: "", passport_series_number: "", plastic_card_info: "", phone_number: "",
+  full_name: "", passport_series_number: "", passport_number: "", birth_date: "", plastic_card_info: "", phone_number: "",
   telegram_username: "", position: "", residence_address: "", temp_living_addresses: [],
-  e_signature_key: "", e_signature_file_url: "", e_signature_password: "",
+  residence_file_url: "", passport_front_url: "", passport_back_url: "",
+  e_signature_file_url: "", e_signature_password: "",
   social_media_assets: emptySocial,
 };
+
+function formatPlasticCard(v: string) {
+  const digits = v.replace(/\D/g, "").slice(0, 16);
+  return digits.replace(/(.{4})/g, "$1 ").trim();
+}
+function formatPhone(v: string) {
+  let d = v.replace(/\D/g, "");
+  if (d.startsWith("998")) d = d.slice(3);
+  d = d.slice(0, 9);
+  let out = "+998";
+  if (d.length > 0) out += " " + d.slice(0, 2);
+  if (d.length > 2) out += " " + d.slice(2, 5);
+  if (d.length > 5) out += " " + d.slice(5, 7);
+  if (d.length > 7) out += " " + d.slice(7, 9);
+  return out;
+}
 
 function WorkersPage() {
   const { t } = useTranslation();
@@ -92,13 +113,17 @@ function WorkersPage() {
     const payload = {
       full_name: editing.full_name,
       passport_series_number: editing.passport_series_number || null,
+      passport_number: editing.passport_number || null,
+      birth_date: editing.birth_date || null,
       plastic_card_info: editing.plastic_card_info || null,
       phone_number: editing.phone_number || null,
       telegram_username: editing.telegram_username || null,
       position: editing.position || null,
       residence_address: editing.residence_address || null,
+      residence_file_url: editing.residence_file_url || null,
+      passport_front_url: editing.passport_front_url || null,
+      passport_back_url: editing.passport_back_url || null,
       temp_living_addresses: tempAddrs.split("\n").map(s => s.trim()).filter(Boolean),
-      e_signature_key: editing.e_signature_key || null,
       e_signature_file_url: editing.e_signature_file_url || null,
       e_signature_password: editing.e_signature_password || null,
       social_media_assets: social,
@@ -142,11 +167,11 @@ function WorkersPage() {
   });
   const workerPromos = (id: string) => promos.filter(p => p.worker_id === id);
 
-  const uploadSig = async (e: React.ChangeEvent<HTMLInputElement>) => {
+  const uploadTo = (folder: string, field: keyof Worker) => async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0]; if (!file || !editing) return;
     try {
-      const path = await uploadFile("workers/esignature", file);
-      setEditing({ ...editing, e_signature_file_url: path });
+      const path = await uploadFile(folder, file);
+      setEditing({ ...editing, [field]: path } as any);
       toast.success(t("saved"));
     } catch (err: any) { toast.error(err.message); }
   };
@@ -202,19 +227,29 @@ function WorkersPage() {
           {editing && (
             <div className="grid grid-cols-2 gap-4">
               <Field label={t("full_name") + " *"}><Input value={editing.full_name || ""} onChange={(e) => setEditing({ ...editing, full_name: e.target.value })} /></Field>
+              <Field label={t("birth_date")}><Input type="date" value={editing.birth_date || ""} onChange={(e) => setEditing({ ...editing, birth_date: e.target.value })} /></Field>
               <Field label={t("position")}><Input value={editing.position || ""} onChange={(e) => setEditing({ ...editing, position: e.target.value })} /></Field>
-              <Field label={t("passport")}><Input value={editing.passport_series_number || ""} onChange={(e) => setEditing({ ...editing, passport_series_number: e.target.value })} /></Field>
-              <Field label={t("plastic_card")}><Input value={editing.plastic_card_info || ""} onChange={(e) => setEditing({ ...editing, plastic_card_info: e.target.value })} /></Field>
-              <Field label={t("phone")}><Input value={editing.phone_number || ""} onChange={(e) => setEditing({ ...editing, phone_number: e.target.value })} /></Field>
+              <Field label={t("passport")}><Input value={editing.passport_series_number || ""} onChange={(e) => setEditing({ ...editing, passport_series_number: e.target.value })} placeholder="AA" /></Field>
+              <Field label={t("passport_number")}><Input value={editing.passport_number || ""} onChange={(e) => setEditing({ ...editing, passport_number: e.target.value.replace(/\D/g,"").slice(0,7) })} placeholder="1234567" /></Field>
+              <Field label={t("passport_front")}>
+                <FileUploadField path={editing.passport_front_url} onChange={uploadTo("workers/passport", "passport_front_url")} onClear={() => setEditing({ ...editing, passport_front_url: "" })} />
+              </Field>
+              <Field label={t("passport_back")}>
+                <FileUploadField path={editing.passport_back_url} onChange={uploadTo("workers/passport", "passport_back_url")} onClear={() => setEditing({ ...editing, passport_back_url: "" })} />
+              </Field>
+              <Field label={t("plastic_card")} className="col-span-2"><Input value={editing.plastic_card_info || ""} onChange={(e) => setEditing({ ...editing, plastic_card_info: formatPlasticCard(e.target.value) })} placeholder="0000 0000 0000 0000" inputMode="numeric" /></Field>
+              <Field label={t("phone")}><Input value={editing.phone_number || ""} onFocus={(e) => { if (!editing.phone_number) setEditing({ ...editing, phone_number: "+998 " }); }} onChange={(e) => setEditing({ ...editing, phone_number: formatPhone(e.target.value) })} placeholder="+998 XX XXX XX XX" inputMode="tel" /></Field>
               <Field label={t("telegram")}><Input value={editing.telegram_username || ""} onChange={(e) => setEditing({ ...editing, telegram_username: e.target.value })} /></Field>
               <Field label={t("residence")} className="col-span-2"><Input value={editing.residence_address || ""} onChange={(e) => setEditing({ ...editing, residence_address: e.target.value })} /></Field>
-              <Field label={t("temp_addresses")} className="col-span-2"><Textarea rows={2} value={tempAddrs} onChange={(e) => setTempAddrs(e.target.value)} placeholder="One per line" /></Field>
-              <Field label={t("e_signature")} className="col-span-2"><Textarea rows={2} value={editing.e_signature_key || ""} onChange={(e) => setEditing({ ...editing, e_signature_key: e.target.value })} /></Field>
+              <Field label={t("residence_file")} className="col-span-2">
+                <FileUploadField path={editing.residence_file_url} onChange={uploadTo("workers/residence", "residence_file_url")} onClear={() => setEditing({ ...editing, residence_file_url: "" })} />
+              </Field>
+              <Field label={t("temp_addresses")} className="col-span-2"><Input maxLength={180} value={tempAddrs} onChange={(e) => setTempAddrs(e.target.value.slice(0,180))} placeholder="Max 180 belgi" /></Field>
               <Field label={t("e_signature_file")}>
                 <div className="flex items-center gap-2">
                   <label className="inline-flex items-center gap-2 cursor-pointer text-sm border rounded px-3 py-1.5 hover:bg-muted">
                     <Upload className="h-4 w-4" />{t("upload")}
-                    <input type="file" className="hidden" onChange={uploadSig} />
+                    <input type="file" className="hidden" onChange={uploadTo("workers/esignature", "e_signature_file_url")} />
                   </label>
                   {editing.e_signature_file_url && (
                     <Button type="button" size="sm" variant="outline" onClick={() => openFile(editing.e_signature_file_url!)}>
@@ -229,7 +264,7 @@ function WorkersPage() {
 
               <div className="col-span-2 border-t pt-4">
                 <Label className="mb-2 block font-semibold">{t("social_assets")}</Label>
-                <div className="space-y-3">
+                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-x-6 gap-y-3">
                   <LinkGroup icon={Instagram} label={t("instagram")} values={social.instagram || []} onChange={(v) => setSocial({ ...social, instagram: v })} />
                   <LinkGroup icon={Send} label={t("telegram_channel")} values={social.telegram || []} onChange={(v) => setSocial({ ...social, telegram: v })} />
                   <LinkGroup icon={Bot} label={t("telegram_bot")} values={social.telegram_bot || []} onChange={(v) => setSocial({ ...social, telegram_bot: v })} />
