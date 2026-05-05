@@ -10,6 +10,7 @@
 
 import { Route as rootRouteImport } from './routes/__root'
 import { Route as WorkersRouteImport } from './routes/workers'
+import { Route as ReportsRouteImport } from './routes/reports'
 import { Route as ProjectsRouteImport } from './routes/projects'
 import { Route as PaymentsRouteImport } from './routes/payments'
 import { Route as LoginRouteImport } from './routes/login'
@@ -20,6 +21,11 @@ import { Route as ClientsClientIdRouteImport } from './routes/clients.$clientId'
 const WorkersRoute = WorkersRouteImport.update({
   id: '/workers',
   path: '/workers',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const ReportsRoute = ReportsRouteImport.update({
+  id: '/reports',
+  path: '/reports',
   getParentRoute: () => rootRouteImport,
 } as any)
 const ProjectsRoute = ProjectsRouteImport.update({
@@ -59,6 +65,7 @@ export interface FileRoutesByFullPath {
   '/login': typeof LoginRoute
   '/payments': typeof PaymentsRoute
   '/projects': typeof ProjectsRoute
+  '/reports': typeof ReportsRoute
   '/workers': typeof WorkersRoute
   '/clients/$clientId': typeof ClientsClientIdRoute
 }
@@ -68,6 +75,7 @@ export interface FileRoutesByTo {
   '/login': typeof LoginRoute
   '/payments': typeof PaymentsRoute
   '/projects': typeof ProjectsRoute
+  '/reports': typeof ReportsRoute
   '/workers': typeof WorkersRoute
   '/clients/$clientId': typeof ClientsClientIdRoute
 }
@@ -78,6 +86,7 @@ export interface FileRoutesById {
   '/login': typeof LoginRoute
   '/payments': typeof PaymentsRoute
   '/projects': typeof ProjectsRoute
+  '/reports': typeof ReportsRoute
   '/workers': typeof WorkersRoute
   '/clients/$clientId': typeof ClientsClientIdRoute
 }
@@ -89,6 +98,7 @@ export interface FileRouteTypes {
     | '/login'
     | '/payments'
     | '/projects'
+    | '/reports'
     | '/workers'
     | '/clients/$clientId'
   fileRoutesByTo: FileRoutesByTo
@@ -98,6 +108,7 @@ export interface FileRouteTypes {
     | '/login'
     | '/payments'
     | '/projects'
+    | '/reports'
     | '/workers'
     | '/clients/$clientId'
   id:
@@ -107,6 +118,7 @@ export interface FileRouteTypes {
     | '/login'
     | '/payments'
     | '/projects'
+    | '/reports'
     | '/workers'
     | '/clients/$clientId'
   fileRoutesById: FileRoutesById
@@ -117,6 +129,7 @@ export interface RootRouteChildren {
   LoginRoute: typeof LoginRoute
   PaymentsRoute: typeof PaymentsRoute
   ProjectsRoute: typeof ProjectsRoute
+  ReportsRoute: typeof ReportsRoute
   WorkersRoute: typeof WorkersRoute
 }
 
@@ -127,6 +140,13 @@ declare module '@tanstack/react-router' {
       path: '/workers'
       fullPath: '/workers'
       preLoaderRoute: typeof WorkersRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/reports': {
+      id: '/reports'
+      path: '/reports'
+      fullPath: '/reports'
+      preLoaderRoute: typeof ReportsRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/projects': {
@@ -191,6 +211,7 @@ const rootRouteChildren: RootRouteChildren = {
   LoginRoute: LoginRoute,
   PaymentsRoute: PaymentsRoute,
   ProjectsRoute: ProjectsRoute,
+  ReportsRoute: ReportsRoute,
   WorkersRoute: WorkersRoute,
 }
 export const routeTree = rootRouteImport
