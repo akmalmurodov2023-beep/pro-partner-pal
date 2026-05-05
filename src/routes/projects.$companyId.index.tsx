@@ -3,8 +3,7 @@ import { useEffect, useState } from "react";
 import { useTranslation } from "react-i18next";
 import { PageHeader } from "@/components/PageHeader";
 import { Card, CardContent } from "@/components/ui/card";
-import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
-import { ArrowLeft, ArrowRight, BarChart3, CreditCard, FileText, MessageSquare, Receipt, Settings } from "lucide-react";
+import { ArrowLeft, BarChart3, CreditCard, FileText, MessageSquare, Receipt, Settings } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { getSignedUrl } from "@/lib/storage";
 
@@ -55,35 +54,21 @@ function CompanyIndex() {
         </Card>
       )}
 
-      <div className="border bg-card overflow-hidden">
-        <Table>
-          <TableHeader>
-            <TableRow>
-              <TableHead>{t("section")}</TableHead>
-              <TableHead className="text-right"></TableHead>
-            </TableRow>
-          </TableHeader>
-          <TableBody>
-            {sections.map(s => {
-              const Icon = s.icon;
-              return (
-                <TableRow key={s.key} className="cursor-pointer">
-                  <TableCell>
-                    <Link to="/projects/$companyId/$section" params={{ companyId, section: s.key }} className="flex items-center gap-3 font-medium">
-                      <Icon className="h-4 w-4 text-muted-foreground" />
-                      {s.label}
-                    </Link>
-                  </TableCell>
-                  <TableCell className="text-right">
-                    <Link to="/projects/$companyId/$section" params={{ companyId, section: s.key }} className="inline-flex items-center text-sm text-muted-foreground hover:text-primary">
-                      {t("view")} <ArrowRight className="h-4 w-4 ml-1" />
-                    </Link>
-                  </TableCell>
-                </TableRow>
-              );
-            })}
-          </TableBody>
-        </Table>
+      <div className="border bg-card divide-y">
+        {sections.map(s => {
+          const Icon = s.icon;
+          return (
+            <Link
+              key={s.key}
+              to="/projects/$companyId/$section"
+              params={{ companyId, section: s.key }}
+              className="flex items-center gap-4 px-6 py-5 hover:bg-muted/50 transition-colors group"
+            >
+              <Icon className="h-6 w-6 text-muted-foreground group-hover:text-primary" />
+              <span className="text-lg font-medium">{s.label}</span>
+            </Link>
+          );
+        })}
       </div>
     </div>
   );
