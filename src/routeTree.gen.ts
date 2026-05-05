@@ -17,6 +17,7 @@ import { Route as LoginRouteImport } from './routes/login'
 import { Route as ClientsRouteImport } from './routes/clients'
 import { Route as IndexRouteImport } from './routes/index'
 import { Route as ProjectsIndexRouteImport } from './routes/projects.index'
+import { Route as WorkersWorkerIdRouteImport } from './routes/workers.$workerId'
 import { Route as ProjectsCompanyIdRouteImport } from './routes/projects.$companyId'
 import { Route as ClientsClientIdRouteImport } from './routes/clients.$clientId'
 import { Route as ProjectsCompanyIdIndexRouteImport } from './routes/projects.$companyId.index'
@@ -63,6 +64,11 @@ const ProjectsIndexRoute = ProjectsIndexRouteImport.update({
   path: '/',
   getParentRoute: () => ProjectsRoute,
 } as any)
+const WorkersWorkerIdRoute = WorkersWorkerIdRouteImport.update({
+  id: '/$workerId',
+  path: '/$workerId',
+  getParentRoute: () => WorkersRoute,
+} as any)
 const ProjectsCompanyIdRoute = ProjectsCompanyIdRouteImport.update({
   id: '/$companyId',
   path: '/$companyId',
@@ -98,9 +104,10 @@ export interface FileRoutesByFullPath {
   '/payments': typeof PaymentsRoute
   '/projects': typeof ProjectsRouteWithChildren
   '/reports': typeof ReportsRoute
-  '/workers': typeof WorkersRoute
+  '/workers': typeof WorkersRouteWithChildren
   '/clients/$clientId': typeof ClientsClientIdRoute
   '/projects/$companyId': typeof ProjectsCompanyIdRouteWithChildren
+  '/workers/$workerId': typeof WorkersWorkerIdRoute
   '/projects/': typeof ProjectsIndexRoute
   '/projects/$companyId/$section': typeof ProjectsCompanyIdSectionRoute
   '/projects/$companyId/': typeof ProjectsCompanyIdIndexRoute
@@ -112,8 +119,9 @@ export interface FileRoutesByTo {
   '/login': typeof LoginRoute
   '/payments': typeof PaymentsRoute
   '/reports': typeof ReportsRoute
-  '/workers': typeof WorkersRoute
+  '/workers': typeof WorkersRouteWithChildren
   '/clients/$clientId': typeof ClientsClientIdRoute
+  '/workers/$workerId': typeof WorkersWorkerIdRoute
   '/projects': typeof ProjectsIndexRoute
   '/projects/$companyId/$section': typeof ProjectsCompanyIdSectionRoute
   '/projects/$companyId': typeof ProjectsCompanyIdIndexRoute
@@ -127,9 +135,10 @@ export interface FileRoutesById {
   '/payments': typeof PaymentsRoute
   '/projects': typeof ProjectsRouteWithChildren
   '/reports': typeof ReportsRoute
-  '/workers': typeof WorkersRoute
+  '/workers': typeof WorkersRouteWithChildren
   '/clients/$clientId': typeof ClientsClientIdRoute
   '/projects/$companyId': typeof ProjectsCompanyIdRouteWithChildren
+  '/workers/$workerId': typeof WorkersWorkerIdRoute
   '/projects/': typeof ProjectsIndexRoute
   '/projects/$companyId/$section': typeof ProjectsCompanyIdSectionRoute
   '/projects/$companyId/': typeof ProjectsCompanyIdIndexRoute
@@ -147,6 +156,7 @@ export interface FileRouteTypes {
     | '/workers'
     | '/clients/$clientId'
     | '/projects/$companyId'
+    | '/workers/$workerId'
     | '/projects/'
     | '/projects/$companyId/$section'
     | '/projects/$companyId/'
@@ -160,6 +170,7 @@ export interface FileRouteTypes {
     | '/reports'
     | '/workers'
     | '/clients/$clientId'
+    | '/workers/$workerId'
     | '/projects'
     | '/projects/$companyId/$section'
     | '/projects/$companyId'
@@ -175,6 +186,7 @@ export interface FileRouteTypes {
     | '/workers'
     | '/clients/$clientId'
     | '/projects/$companyId'
+    | '/workers/$workerId'
     | '/projects/'
     | '/projects/$companyId/$section'
     | '/projects/$companyId/'
@@ -188,7 +200,7 @@ export interface RootRouteChildren {
   PaymentsRoute: typeof PaymentsRoute
   ProjectsRoute: typeof ProjectsRouteWithChildren
   ReportsRoute: typeof ReportsRoute
-  WorkersRoute: typeof WorkersRoute
+  WorkersRoute: typeof WorkersRouteWithChildren
 }
 
 declare module '@tanstack/react-router' {
@@ -248,6 +260,13 @@ declare module '@tanstack/react-router' {
       fullPath: '/projects/'
       preLoaderRoute: typeof ProjectsIndexRouteImport
       parentRoute: typeof ProjectsRoute
+    }
+    '/workers/$workerId': {
+      id: '/workers/$workerId'
+      path: '/$workerId'
+      fullPath: '/workers/$workerId'
+      preLoaderRoute: typeof WorkersWorkerIdRouteImport
+      parentRoute: typeof WorkersRoute
     }
     '/projects/$companyId': {
       id: '/projects/$companyId'
@@ -327,6 +346,17 @@ const ProjectsRouteWithChildren = ProjectsRoute._addFileChildren(
   ProjectsRouteChildren,
 )
 
+interface WorkersRouteChildren {
+  WorkersWorkerIdRoute: typeof WorkersWorkerIdRoute
+}
+
+const WorkersRouteChildren: WorkersRouteChildren = {
+  WorkersWorkerIdRoute: WorkersWorkerIdRoute,
+}
+
+const WorkersRouteWithChildren =
+  WorkersRoute._addFileChildren(WorkersRouteChildren)
+
 const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
   ClientsRoute: ClientsRouteWithChildren,
@@ -334,7 +364,7 @@ const rootRouteChildren: RootRouteChildren = {
   PaymentsRoute: PaymentsRoute,
   ProjectsRoute: ProjectsRouteWithChildren,
   ReportsRoute: ReportsRoute,
-  WorkersRoute: WorkersRoute,
+  WorkersRoute: WorkersRouteWithChildren,
 }
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)
