@@ -76,7 +76,7 @@ export async function notifyPaymentConfirmed(opts: {
   });
   const text =
     `🎉  <b>Tabriklaymiz, ${w.full_name}!</b> 🎉\n\n` +
-    `👤 Sizga <b>${MONTHS_FULL[opts.month - 1]}</b> oyi uchun <b>${projectName}</b> uchun to'lov tasdiqlandi ✅\n\n` +
+    `✅ Sizning <b>${projectName}</b> uchun <b>${MONTHS_FULL[opts.month - 1]}</b> oyi to'lovingiz tasdiqlandi.\n\n` +
     `🕔 Vaqt: ${time}\n` +
     `💰 Umumiy miqdor: <b>${fmtNum(opts.amount)}</b> so'm\n` +
     `🏁 Reyting: <b>${rank}</b> o'rin`;
