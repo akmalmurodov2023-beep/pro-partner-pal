@@ -75,7 +75,7 @@ export function CpaTab({ clientId }: { clientId: string }) {
       {sorted.length === 0 ? (
         <div className="text-muted-foreground text-sm">{t("no_data")}</div>
       ) : (
-        <div className="border rounded-lg bg-card overflow-x-auto">
+        <div className="border bg-card overflow-x-auto">
           <Table>
             <TableHeader>
               <TableRow>
@@ -135,7 +135,7 @@ export function CpaTab({ clientId }: { clientId: string }) {
       <Dialog open={bloggersOpen} onOpenChange={setBloggersOpen}>
         <DialogContent className="max-w-2xl">
           <DialogHeader><DialogTitle>{t("bloggers")} — {bloggersTitle}</DialogTitle></DialogHeader>
-          <div className="border rounded-lg overflow-x-auto">
+          <div className="border overflow-x-auto">
             <Table>
               <TableHeader>
                 <TableRow>
@@ -201,7 +201,7 @@ export function PaymentsTab({ clientId }: { clientId: string }) {
   return (
     <div>
       <div className="flex justify-end mb-3"><Button onClick={() => { setEditing({ payment_date: new Date().toISOString().slice(0, 10), amount: 0 }); setOpen(true); }}><Plus className="h-4 w-4 mr-2" />{t("add")}</Button></div>
-      <div className="border rounded-lg bg-card overflow-x-auto">
+      <div className="border bg-card overflow-x-auto">
         <Table>
           <TableHeader><TableRow><TableHead>{t("date")}</TableHead><TableHead>{t("worker")}</TableHead><TableHead>{t("amount")}</TableHead><TableHead>{t("payment_type")}</TableHead><TableHead>{t("receipt")}</TableHead><TableHead className="text-right">{t("actions")}</TableHead></TableRow></TableHeader>
           <TableBody>
@@ -282,7 +282,7 @@ export function DocsTab({ clientId, kind }: { clientId: string; kind: "contract"
   return (
     <div>
       <div className="flex justify-end mb-3"><Button onClick={() => { setEditing({ status: "active" }); setOpen(true); }}><Plus className="h-4 w-4 mr-2" />{t("add")}</Button></div>
-      <div className="border rounded-lg bg-card overflow-x-auto">
+      <div className="border bg-card overflow-x-auto">
         <Table>
           <TableHeader><TableRow><TableHead>{t("project_name")}</TableHead><TableHead>{kind === "contract" ? t("contract") : t("invoice")}</TableHead><TableHead>{t("status")}</TableHead><TableHead className="text-right">{t("actions")}</TableHead></TableRow></TableHeader>
           <TableBody>
