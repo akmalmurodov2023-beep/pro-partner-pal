@@ -17,7 +17,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { uploadFile, openFile, getSignedUrl } from "@/lib/storage";
 import { toast } from "sonner";
 
-export const Route = createFileRoute("/projects/")({
+export const Route = createFileRoute("/projects/$companyId")({
   component: () => <AppLayout><CompanyDetail /></AppLayout>,
 });
 
