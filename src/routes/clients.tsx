@@ -1,5 +1,5 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { useTranslation } from "react-i18next";
 import { AppLayout } from "@/components/AppLayout";
 import { PageHeader } from "@/components/PageHeader";
@@ -25,17 +25,24 @@ function ClientsPage() {
   const [editing, setEditing] = useState<Partial<Client> | null>(null);
   const [logoPreview, setLogoPreview] = useState<string | null>(null);
   const [logoUrls, setLogoUrls] = useState<Record<string, string>>({});
+  const loadingRef = useRef(false);
 
   const load = async () => {
+    if (loadingRef.current) return;
+    loadingRef.current = true;
     const { data } = await supabase.from("clients").select("*").order("created_at", { ascending: false });
     if (data) {
-      setRows(data as Client[]);
-      const urls: Record<string, string> = {};
-      await Promise.all((data as Client[]).map(async (c) => {
-        if (c.logo_url) { const u = await getSignedUrl(c.logo_url); if (u) urls[c.id] = u; }
-      }));
-      setLogoUrls(urls);
+      const list = data as Client[];
+      setRows(list);
+      // Fire-and-forget: load logos in background, update incrementally
+      list.forEach(async (c) => {
+        if (c.logo_url) {
+          const u = await getSignedUrl(c.logo_url);
+          if (u) setLogoUrls((prev) => ({ ...prev, [c.id]: u }));
+        }
+      });
     }
+    loadingRef.current = false;
   };
   useEffect(() => { load(); }, []);
 
