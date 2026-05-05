@@ -1,7 +1,7 @@
 import { useEffect, useState } from "react";
-import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
+import { createFileRoute, Link } from "@tanstack/react-router";
 import { useTranslation } from "react-i18next";
-import { ArrowLeft, Check, X, Download, FileText } from "lucide-react";
+import { ArrowLeft, Check, X, Download } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { PageHeader } from "@/components/PageHeader";
@@ -18,7 +18,6 @@ const pad = (n: number) => String(n).padStart(2, "0");
 function MonthDetailPage() {
   const { t } = useTranslation();
   const { companyId, monthId } = Route.useParams();
-  const navigate = useNavigate();
   const [month, setMonth] = useState<any>(null);
   const [payments, setPayments] = useState<any[]>([]);
   const [workers, setWorkers] = useState<any[]>([]);
@@ -66,11 +65,6 @@ function MonthDetailPage() {
               <Download className="h-3 w-3 mr-1" />File {i + 1}
             </Button>
           ))}
-          {month && (
-            <Button size="sm" variant="outline" onClick={() => navigate({ to: "/projects/$companyId/$section", params: { companyId, section: "cpa" }, search: { edit: month.id } as any })}>
-              <FileText className="h-3 w-3 mr-1" />{t("edit")}
-            </Button>
-          )}
         </div>
       </div>
 
