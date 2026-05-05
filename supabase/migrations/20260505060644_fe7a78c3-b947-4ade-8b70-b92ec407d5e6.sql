@@ -1,0 +1,1 @@
+ALTER TABLE public.clients ADD COLUMN IF NOT EXISTS telegram_archive_zips TEXT[] NOT NULL DEFAULT '{}';

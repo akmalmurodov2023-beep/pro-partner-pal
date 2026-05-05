@@ -23,6 +23,7 @@ export type Database = {
           inn: string | null
           logo_url: string | null
           telegram_archive_link: string | null
+          telegram_archive_zips: string[]
           updated_at: string
         }
         Insert: {
@@ -33,6 +34,7 @@ export type Database = {
           inn?: string | null
           logo_url?: string | null
           telegram_archive_link?: string | null
+          telegram_archive_zips?: string[]
           updated_at?: string
         }
         Update: {
@@ -43,6 +45,7 @@ export type Database = {
           inn?: string | null
           logo_url?: string | null
           telegram_archive_link?: string | null
+          telegram_archive_zips?: string[]
           updated_at?: string
         }
         Relationships: []
