@@ -98,36 +98,46 @@ export function CpaTab({ clientId }: { clientId: string }) {
       {sorted.length === 0 ? (
         <div className="text-muted-foreground text-sm">{t("no_data")}</div>
       ) : (
-        <div className="border bg-card overflow-x-auto">
-          <Table>
-            <TableHeader>
-              <TableRow>
-                <TableHead>{t("month")}</TableHead>
-                <TableHead>{t("period")}</TableHead>
-                <TableHead>{t("attendance")}</TableHead>
-                <TableHead className="text-right">{t("results")}</TableHead>
-              </TableRow>
-            </TableHeader>
-            <TableBody>
-              {sorted.map(m => {
-                const count = Array.isArray(m.results_table_data) ? m.results_table_data.length : 0;
-                return (
-                  <TableRow key={m.id} onDoubleClick={() => openDetails(m)} className="cursor-pointer">
-                    <TableCell className="font-medium">{MONTHS[m.month - 1]} {m.year}</TableCell>
-                    <TableCell className="text-muted-foreground">{monthRange(m.year, m.month)}</TableCell>
-                    <TableCell>
-                      <Button size="sm" variant="outline" onClick={(e) => { e.stopPropagation(); openDetails(m); }}>{count}</Button>
-                    </TableCell>
-                    <TableCell className="text-right">
-                      <Button size="sm" variant="outline" onClick={(e) => { e.stopPropagation(); openDetails(m); }}>
-                        <FileText className="h-3 w-3 mr-1" />{t("results_btn")}
-                      </Button>
-                    </TableCell>
-                  </TableRow>
-                );
-              })}
-            </TableBody>
-          </Table>
+        <div className="space-y-6">
+          {Array.from(new Set(sorted.map(m => m.year))).sort((a, b) => b - a).map(year => {
+            const yearMonths = sorted.filter(m => m.year === year);
+            return (
+              <div key={year}>
+                <div className="text-lg font-semibold mb-2">{year}</div>
+                <div className="border bg-card overflow-x-auto">
+                  <Table>
+                    <TableHeader>
+                      <TableRow>
+                        <TableHead>{t("month")}</TableHead>
+                        <TableHead>{t("period")}</TableHead>
+                        <TableHead>{t("attendance")}</TableHead>
+                        <TableHead className="text-right">{t("results")}</TableHead>
+                      </TableRow>
+                    </TableHeader>
+                    <TableBody>
+                      {yearMonths.map(m => {
+                        const count = Array.isArray(m.results_table_data) ? m.results_table_data.length : 0;
+                        return (
+                          <TableRow key={m.id} onDoubleClick={() => openDetails(m)} className="cursor-pointer">
+                            <TableCell className="font-medium">{MONTHS[m.month - 1]} {m.year}</TableCell>
+                            <TableCell className="text-muted-foreground">{monthRange(m.year, m.month)}</TableCell>
+                            <TableCell>
+                              <Button size="sm" variant="outline" onClick={(e) => { e.stopPropagation(); openDetails(m); }}>{count}</Button>
+                            </TableCell>
+                            <TableCell className="text-right">
+                              <Button size="sm" variant="outline" onClick={(e) => { e.stopPropagation(); openDetails(m); }}>
+                                <FileText className="h-3 w-3 mr-1" />{t("results_btn")}
+                              </Button>
+                            </TableCell>
+                          </TableRow>
+                        );
+                      })}
+                    </TableBody>
+                  </Table>
+                </div>
+              </div>
+            );
+          })}
         </div>
       )}
 
