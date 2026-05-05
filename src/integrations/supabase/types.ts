@@ -14,7 +14,249 @@ export type Database = {
   }
   public: {
     Tables: {
-      [_ in never]: never
+      clients: {
+        Row: {
+          bank_account: string | null
+          company_name: string
+          created_at: string
+          id: string
+          inn: string | null
+          telegram_archive_link: string | null
+          updated_at: string
+        }
+        Insert: {
+          bank_account?: string | null
+          company_name: string
+          created_at?: string
+          id?: string
+          inn?: string | null
+          telegram_archive_link?: string | null
+          updated_at?: string
+        }
+        Update: {
+          bank_account?: string | null
+          company_name?: string
+          created_at?: string
+          id?: string
+          inn?: string | null
+          telegram_archive_link?: string | null
+          updated_at?: string
+        }
+        Relationships: []
+      }
+      monthly_results: {
+        Row: {
+          client_id: string | null
+          created_at: string
+          id: string
+          month: number
+          results_table_data: Json | null
+          total_stats: string | null
+          updated_at: string
+          uploaded_docs_urls: string[] | null
+          year: number
+        }
+        Insert: {
+          client_id?: string | null
+          created_at?: string
+          id?: string
+          month: number
+          results_table_data?: Json | null
+          total_stats?: string | null
+          updated_at?: string
+          uploaded_docs_urls?: string[] | null
+          year: number
+        }
+        Update: {
+          client_id?: string | null
+          created_at?: string
+          id?: string
+          month?: number
+          results_table_data?: Json | null
+          total_stats?: string | null
+          updated_at?: string
+          uploaded_docs_urls?: string[] | null
+          year?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "monthly_results_client_id_fkey"
+            columns: ["client_id"]
+            isOneToOne: false
+            referencedRelation: "clients"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      payments: {
+        Row: {
+          amount: number
+          client_id: string | null
+          created_at: string
+          id: string
+          notes: string | null
+          payment_date: string
+          payment_type: string | null
+          receipt_url: string | null
+          worker_id: string | null
+        }
+        Insert: {
+          amount?: number
+          client_id?: string | null
+          created_at?: string
+          id?: string
+          notes?: string | null
+          payment_date?: string
+          payment_type?: string | null
+          receipt_url?: string | null
+          worker_id?: string | null
+        }
+        Update: {
+          amount?: number
+          client_id?: string | null
+          created_at?: string
+          id?: string
+          notes?: string | null
+          payment_date?: string
+          payment_type?: string | null
+          receipt_url?: string | null
+          worker_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "payments_client_id_fkey"
+            columns: ["client_id"]
+            isOneToOne: false
+            referencedRelation: "clients"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "payments_worker_id_fkey"
+            columns: ["worker_id"]
+            isOneToOne: false
+            referencedRelation: "workers"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      projects: {
+        Row: {
+          client_id: string | null
+          contract_url: string | null
+          created_at: string
+          id: string
+          invoice_url: string | null
+          project_name: string | null
+          status: string | null
+          updated_at: string
+        }
+        Insert: {
+          client_id?: string | null
+          contract_url?: string | null
+          created_at?: string
+          id?: string
+          invoice_url?: string | null
+          project_name?: string | null
+          status?: string | null
+          updated_at?: string
+        }
+        Update: {
+          client_id?: string | null
+          contract_url?: string | null
+          created_at?: string
+          id?: string
+          invoice_url?: string | null
+          project_name?: string | null
+          status?: string | null
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "projects_client_id_fkey"
+            columns: ["client_id"]
+            isOneToOne: false
+            referencedRelation: "clients"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      promocodes: {
+        Row: {
+          code: string
+          created_at: string
+          id: string
+          worker_id: string | null
+        }
+        Insert: {
+          code: string
+          created_at?: string
+          id?: string
+          worker_id?: string | null
+        }
+        Update: {
+          code?: string
+          created_at?: string
+          id?: string
+          worker_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "promocodes_worker_id_fkey"
+            columns: ["worker_id"]
+            isOneToOne: false
+            referencedRelation: "workers"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      workers: {
+        Row: {
+          created_at: string
+          e_signature_key: string | null
+          full_name: string
+          id: string
+          passport_series_number: string | null
+          phone_number: string | null
+          plastic_card_info: string | null
+          position: string | null
+          residence_address: string | null
+          social_media_assets: Json | null
+          telegram_username: string | null
+          temp_living_addresses: string[] | null
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          e_signature_key?: string | null
+          full_name: string
+          id?: string
+          passport_series_number?: string | null
+          phone_number?: string | null
+          plastic_card_info?: string | null
+          position?: string | null
+          residence_address?: string | null
+          social_media_assets?: Json | null
+          telegram_username?: string | null
+          temp_living_addresses?: string[] | null
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          e_signature_key?: string | null
+          full_name?: string
+          id?: string
+          passport_series_number?: string | null
+          phone_number?: string | null
+          plastic_card_info?: string | null
+          position?: string | null
+          residence_address?: string | null
+          social_media_assets?: Json | null
+          telegram_username?: string | null
+          temp_living_addresses?: string[] | null
+          updated_at?: string
+        }
+        Relationships: []
+      }
     }
     Views: {
       [_ in never]: never
