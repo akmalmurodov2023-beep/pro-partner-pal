@@ -241,6 +241,7 @@ export type Database = {
           residence_address: string | null
           residence_file_url: string | null
           social_media_assets: Json | null
+          telegram_id: string | null
           telegram_username: string | null
           temp_living_addresses: string[] | null
           updated_at: string
@@ -264,6 +265,7 @@ export type Database = {
           residence_address?: string | null
           residence_file_url?: string | null
           social_media_assets?: Json | null
+          telegram_id?: string | null
           telegram_username?: string | null
           temp_living_addresses?: string[] | null
           updated_at?: string
@@ -287,6 +289,7 @@ export type Database = {
           residence_address?: string | null
           residence_file_url?: string | null
           social_media_assets?: Json | null
+          telegram_id?: string | null
           telegram_username?: string | null
           temp_living_addresses?: string[] | null
           updated_at?: string

@@ -29,6 +29,7 @@ type Worker = {
   plastic_card_info: string | null;
   phone_number: string | null;
   telegram_username: string | null;
+  telegram_id: string | null;
   position: string | null;
   residence_address: string | null;
   residence_file_url: string | null;
@@ -55,7 +56,7 @@ const emptySocial: SocialAssets = { instagram: [], telegram: [], telegram_bot: [
 
 const empty: Partial<Worker> = {
   full_name: "", avatar_url: "", passport_series_number: "", passport_number: "", birth_date: "", plastic_card_info: "", phone_number: "",
-  telegram_username: "", position: "", residence_address: "", temp_living_addresses: [],
+  telegram_username: "", telegram_id: "", position: "", residence_address: "", temp_living_addresses: [],
   residence_file_url: "", passport_front_url: "", passport_back_url: "",
   e_signature_file_url: "", e_signature_password: "",
   social_media_assets: emptySocial,
@@ -127,6 +128,7 @@ function WorkersPage() {
       plastic_card_info: editing.plastic_card_info || null,
       phone_number: editing.phone_number || null,
       telegram_username: editing.telegram_username || null,
+      telegram_id: editing.telegram_id || null,
       position: editing.position || null,
       residence_address: editing.residence_address || null,
       residence_file_url: editing.residence_file_url || null,
@@ -286,6 +288,7 @@ function WorkersPage() {
               <Field label={t("plastic_card")} className="col-span-2"><Input value={editing.plastic_card_info || ""} onChange={(e) => setEditing({ ...editing, plastic_card_info: formatPlasticCard(e.target.value) })} placeholder="0000 0000 0000 0000" inputMode="numeric" /></Field>
               <Field label={t("phone")}><Input value={editing.phone_number || ""} onFocus={(e) => { if (!editing.phone_number) setEditing({ ...editing, phone_number: "+998 " }); }} onChange={(e) => setEditing({ ...editing, phone_number: formatPhone(e.target.value) })} placeholder="+998 XX XXX XX XX" inputMode="tel" /></Field>
               <Field label={t("telegram")}><Input value={editing.telegram_username || ""} onChange={(e) => setEditing({ ...editing, telegram_username: e.target.value })} /></Field>
+              <Field label="Telegram ID"><Input value={editing.telegram_id || ""} onChange={(e) => setEditing({ ...editing, telegram_id: e.target.value.replace(/\D/g, "") })} placeholder="123456789" inputMode="numeric" /></Field>
               <Field label={t("residence")} className="col-span-2"><Input value={editing.residence_address || ""} onChange={(e) => setEditing({ ...editing, residence_address: e.target.value })} /></Field>
               <Field label={t("residence_file")} className="col-span-2">
                 <FileUploadField path={editing.residence_file_url} onChange={uploadTo("workers/residence", "residence_file_url")} onClear={() => setEditing({ ...editing, residence_file_url: "" })} />
