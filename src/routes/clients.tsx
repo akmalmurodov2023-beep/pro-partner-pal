@@ -10,7 +10,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Plus, Pencil, Trash2, ArrowRight, Upload, Building2 } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
-import { uploadFile, getSignedUrl } from "@/lib/storage";
+import { uploadFile, getSignedUrl, getSignedUrls } from "@/lib/storage";
 import { toast } from "sonner";
 
 export const Route = createFileRoute("/clients")({ component: () => <AppLayout><ClientsPage /></AppLayout> });
@@ -34,13 +34,15 @@ function ClientsPage() {
     if (data) {
       const list = data as Client[];
       setRows(list);
-      // Fire-and-forget: load logos in background, update incrementally
-      list.forEach(async (c) => {
-        if (c.logo_url) {
-          const u = await getSignedUrl(c.logo_url);
-          if (u) setLogoUrls((prev) => ({ ...prev, [c.id]: u }));
-        }
-      });
+      // Batch all logos in a single request (cached after first load)
+      const paths = list.map((c) => c.logo_url).filter(Boolean) as string[];
+      if (paths.length > 0) {
+        getSignedUrls(paths).then((map) => {
+          const next: Record<string, string> = {};
+          for (const c of list) if (c.logo_url && map[c.logo_url]) next[c.id] = map[c.logo_url];
+          setLogoUrls((prev) => ({ ...prev, ...next }));
+        });
+      }
     }
     loadingRef.current = false;
   };
