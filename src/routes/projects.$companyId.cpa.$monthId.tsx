@@ -50,10 +50,10 @@ function MonthDetailPage() {
       const end = `${m.year}-${pad(m.month)}-${pad(last)}`;
       const [p, w] = await Promise.all([
         supabase.from("payments").select("*").eq("client_id", companyId).gte("payment_date", start).lte("payment_date", end),
-        supabase.from("workers").select("id,full_name"),
+        supabase.from("project_workers").select("worker_id, workers(id, full_name)").eq("client_id", companyId),
       ]);
       setPayments(p.data || []);
-      setWorkers(w.data || []);
+      setWorkers((w.data || []).map((r: any) => r.workers).filter(Boolean));
       setLoading(false);
     })();
   }, [monthId, companyId]);
