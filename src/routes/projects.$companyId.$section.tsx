@@ -28,7 +28,7 @@ function SectionPage() {
       <Link to="/projects/$companyId" params={{ companyId }} className="inline-flex items-center text-sm text-muted-foreground hover:underline mb-4">
         <ArrowLeft className="h-4 w-4 mr-1" />{t("back")}
       </Link>
-      <PageHeader title={t(titleKey[section])} />
+      <PageHeader title={section === "workers" ? "Ishchilar" : t(titleKey[section])} />
       {section === "cpa" && <CpaTab clientId={companyId} />}
       {section === "workers" && <ProjectWorkersTab clientId={companyId} />}
       {section === "payments" && <PaymentsTab clientId={companyId} />}
