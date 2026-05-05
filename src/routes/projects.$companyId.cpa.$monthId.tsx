@@ -148,6 +148,28 @@ function MonthDetailPage() {
         <Button onClick={openAdd}><Plus className="h-4 w-4 mr-2" />{t("add_entry")}</Button>
       </div>
 
+      {month && (() => {
+        const total = rows.reduce((s: number, r: any) => s + (Number(r.salary) || 0), 0);
+        const paidTotal = rows.reduce((s: number, r: any) => s + ((Number(r.paid_amount) || 0) || paidForWorker(r.worker || "")), 0);
+        const profit = total - paidTotal;
+        return (
+          <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 mb-4">
+            <div className="border bg-card p-4">
+              <div className="text-xs text-muted-foreground">{t("total_amount")}</div>
+              <div className="text-2xl font-semibold mt-1">{fmt(total)}</div>
+            </div>
+            <div className="border bg-card p-4">
+              <div className="text-xs text-muted-foreground">{t("total_paid")}</div>
+              <div className="text-2xl font-semibold mt-1 text-green-600">{fmt(paidTotal)}</div>
+            </div>
+            <div className="border bg-card p-4">
+              <div className="text-xs text-muted-foreground">{t("profit")}</div>
+              <div className={`text-2xl font-semibold mt-1 ${profit > 0 ? "text-destructive" : "text-foreground"}`}>{fmt(profit)}</div>
+            </div>
+          </div>
+        );
+      })()}
+
       {loading ? (
         <div className="text-muted-foreground text-sm">...</div>
       ) : !month ? (

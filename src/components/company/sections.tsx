@@ -63,8 +63,35 @@ export function CpaTab({ clientId }: { clientId: string }) {
     navigate({ to: "/projects/$companyId/cpa/$monthId", params: { companyId: clientId, monthId: m.id } });
   };
 
+  const fmt = (n: number) => Number(n || 0).toString().replace(/\B(?=(\d{3})+(?!\d))/g, " ");
+  const totals = sorted.reduce((acc, m) => {
+    const rows = Array.isArray(m.results_table_data) ? m.results_table_data : [];
+    for (const r of rows) {
+      acc.total += Number(r.salary) || 0;
+      acc.paid += Number(r.paid_amount) || 0;
+    }
+    return acc;
+  }, { total: 0, paid: 0 });
+  const profit = totals.total - totals.paid;
+
   return (
     <div>
+      {sorted.length > 0 && (
+        <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 mb-4">
+          <div className="border bg-card p-4">
+            <div className="text-xs text-muted-foreground">{t("total_amount")}</div>
+            <div className="text-2xl font-semibold mt-1">{fmt(totals.total)}</div>
+          </div>
+          <div className="border bg-card p-4">
+            <div className="text-xs text-muted-foreground">{t("total_paid")}</div>
+            <div className="text-2xl font-semibold mt-1 text-green-600">{fmt(totals.paid)}</div>
+          </div>
+          <div className="border bg-card p-4">
+            <div className="text-xs text-muted-foreground">{t("profit")}</div>
+            <div className={`text-2xl font-semibold mt-1 ${profit > 0 ? "text-destructive" : "text-foreground"}`}>{fmt(profit)}</div>
+          </div>
+        </div>
+      )}
       <div className="flex justify-end mb-3">
         <Button onClick={newMonth}><Plus className="h-4 w-4 mr-2" />{t("open_new_month")}</Button>
       </div>
