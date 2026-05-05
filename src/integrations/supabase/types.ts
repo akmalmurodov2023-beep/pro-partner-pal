@@ -104,6 +104,8 @@ export type Database = {
           payment_date: string
           payment_type: string | null
           receipt_url: string | null
+          target_month: number | null
+          target_year: number | null
           worker_id: string | null
         }
         Insert: {
@@ -115,6 +117,8 @@ export type Database = {
           payment_date?: string
           payment_type?: string | null
           receipt_url?: string | null
+          target_month?: number | null
+          target_year?: number | null
           worker_id?: string | null
         }
         Update: {
@@ -126,6 +130,8 @@ export type Database = {
           payment_date?: string
           payment_type?: string | null
           receipt_url?: string | null
+          target_month?: number | null
+          target_year?: number | null
           worker_id?: string | null
         }
         Relationships: [

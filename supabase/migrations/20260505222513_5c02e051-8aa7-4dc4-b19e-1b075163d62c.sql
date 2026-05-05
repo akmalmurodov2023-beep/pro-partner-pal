@@ -1,0 +1,1 @@
+ALTER TABLE public.payments ADD COLUMN IF NOT EXISTS target_year integer, ADD COLUMN IF NOT EXISTS target_month integer;
