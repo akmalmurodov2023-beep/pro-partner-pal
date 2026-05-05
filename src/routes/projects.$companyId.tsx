@@ -115,30 +115,34 @@ function CpaTab({ clientId }: { clientId: string }) {
     try { const path = await uploadFile(`monthly/${clientId}`, file); setEditing({ ...editing, uploaded_docs_urls: [...(editing.uploaded_docs_urls || []), path] }); } catch (err: any) { toast.error(err.message); }
   };
 
-  const byYear: Record<number, any[]> = {};
-  results.forEach(m => { (byYear[m.year] ??= []).push(m); });
+  const sorted = [...results].sort((a, b) => b.year - a.year || b.month - a.month);
 
   return (
     <div>
-      <div className="flex justify-end mb-3"><Button onClick={newMonth}><Plus className="h-4 w-4 mr-2" />{t("open_new_month")}</Button></div>
-      {Object.keys(byYear).length === 0 && <div className="text-muted-foreground text-sm">{t("no_data")}</div>}
-      {Object.entries(byYear).sort((a, b) => Number(b[0]) - Number(a[0])).map(([year, months]) => (
-        <div key={year} className="mb-6">
-          <h3 className="font-bold mb-2">{year}</h3>
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3">
-            {months.map(m => (
-              <Card key={m.id} className="cursor-pointer hover:border-primary" onClick={() => editMonth(m)}>
-                <CardContent className="pt-4">
-                  <div className="font-semibold flex items-center justify-between">{MONTHS[m.month - 1]} {m.year}
-                    <Button size="icon" variant="ghost" onClick={(e) => { e.stopPropagation(); del(m.id); }}><Trash2 className="h-4 w-4" /></Button>
+      <div className="flex justify-end mb-3">
+        <Button onClick={newMonth}><Plus className="h-4 w-4 mr-2" />{t("open_new_month")}</Button>
+      </div>
+      {sorted.length === 0 ? (
+        <div className="text-muted-foreground text-sm">{t("no_data")}</div>
+      ) : (
+        <div className="space-y-2">
+          {sorted.map(m => (
+            <Card key={m.id} className="cursor-pointer hover:border-primary transition-colors" onClick={() => editMonth(m)}>
+              <CardContent className="py-3 flex items-center gap-3">
+                <div className="flex-1">
+                  <div className="font-semibold">{MONTHS[m.month - 1]} {m.year}</div>
+                  <div className="text-xs text-muted-foreground">
+                    {Array.isArray(m.results_table_data) ? m.results_table_data.length : 0} rows · {(m.uploaded_docs_urls || []).length} files
                   </div>
-                  <div className="text-xs text-muted-foreground mt-1">{Array.isArray(m.results_table_data) ? m.results_table_data.length : 0} rows · {(m.uploaded_docs_urls || []).length} files</div>
-                </CardContent>
-              </Card>
-            ))}
-          </div>
+                </div>
+                <Button size="icon" variant="ghost" onClick={(e) => { e.stopPropagation(); del(m.id); }}>
+                  <Trash2 className="h-4 w-4" />
+                </Button>
+              </CardContent>
+            </Card>
+          ))}
         </div>
-      ))}
+      )}
 
       <Dialog open={open} onOpenChange={setOpen}>
         <DialogContent className="max-w-3xl max-h-[90vh] overflow-y-auto">
