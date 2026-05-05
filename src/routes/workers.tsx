@@ -131,6 +131,7 @@ function WorkersPage() {
     load();
   };
   const delPromo = async (id: string) => {
+    if (!confirm(t("confirm_delete"))) return;
     await supabase.from("promocodes").delete().eq("id", id);
     load();
   };
