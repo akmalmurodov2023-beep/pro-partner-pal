@@ -14,6 +14,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { openFile, uploadFile } from "@/lib/storage";
 import { MONTHS } from "@/components/company/sections";
 import { toast } from "sonner";
+import { notifyPaymentConfirmed, notifyNewResult } from "@/lib/notify";
 
 export const Route = createFileRoute("/projects/$companyId/cpa/$monthId")({
   component: MonthDetailPage,
@@ -115,9 +116,35 @@ function MonthDetailPage() {
       paid_status: form.paid_status || "unpaid",
     };
     const next = [...rows];
-    if (editIdx === null) next.push(entry); else next[editIdx] = entry;
+    const isNew = editIdx === null;
+    const prev = isNew ? null : rows[editIdx!];
+    if (isNew) next.push(entry); else next[editIdx!] = entry;
     await persist(next);
     setDlgOpen(false);
+    // Triggers
+    try {
+      if (isNew && entry.results) {
+        await notifyNewResult({
+          workerId: w.id,
+          clientId: companyId,
+          month: month.month,
+          results: entry.results,
+        });
+      }
+      const wasPaid = prev?.paid_status === "paid";
+      const nowPaid = entry.paid_status === "paid";
+      if (!wasPaid && nowPaid) {
+        await notifyPaymentConfirmed({
+          workerId: w.id,
+          clientId: companyId,
+          month: month.month,
+          year: month.year,
+          amount: entry.paid_amount || entry.salary,
+        });
+      }
+    } catch (e) {
+      console.error("notify error", e);
+    }
   };
 
   const removeRow = async (i: number) => {
