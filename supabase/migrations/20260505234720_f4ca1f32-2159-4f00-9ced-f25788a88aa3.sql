@@ -1,0 +1,1 @@
+ALTER TABLE public.project_workers ADD COLUMN IF NOT EXISTS promo_code text;
