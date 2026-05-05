@@ -12,10 +12,11 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Textarea } from "@/components/ui/textarea";
-import { ArrowLeft, Plus, Upload, FileText, Trash2, ExternalLink, Send } from "lucide-react";
+import { ArrowLeft, Plus, Upload, FileText, Trash2, ExternalLink, Send, FileArchive, Download, Loader2 } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { uploadFile, openFile, getSignedUrl } from "@/lib/storage";
 import { toast } from "sonner";
+import JSZip from "jszip";
 
 export const Route = createFileRoute("/projects/$companyId")({
   component: () => <AppLayout><CompanyDetail /></AppLayout>,
@@ -70,7 +71,10 @@ function CompanyDetail() {
         <TabsContent value="payments" className="mt-4"><PaymentsTab clientId={companyId} /></TabsContent>
         <TabsContent value="contracts" className="mt-4"><DocsTab clientId={companyId} kind="contract" /></TabsContent>
         <TabsContent value="invoices" className="mt-4"><DocsTab clientId={companyId} kind="invoice" /></TabsContent>
-        <TabsContent value="telegram" className="mt-4"><TelegramTab client={client} /></TabsContent>
+        <TabsContent value="telegram" className="mt-4"><TelegramTab client={client} reload={async () => {
+          const { data } = await supabase.from("clients").select("*").eq("id", companyId).maybeSingle();
+          setClient(data);
+        }} /></TabsContent>
       </Tabs>
     </div>
   );
@@ -263,7 +267,7 @@ function DocsTab({ clientId, kind }: { clientId: string; kind: "contract" | "inv
   useEffect(() => { load(); }, [clientId]);
 
   const save = async () => {
-    const payload = { client_id: clientId, project_name: editing.project_name || null, [field]: editing[field] || null, status: editing.status || "active" };
+    const payload: any = { client_id: clientId, project_name: editing.project_name || null, [field]: editing[field] || null, status: editing.status || "active" };
     const r = editing.id ? await supabase.from("projects").update(payload).eq("id", editing.id) : await supabase.from("projects").insert(payload);
     if (r.error) return toast.error(r.error.message);
     toast.success(t("saved")); setOpen(false); load();
@@ -325,23 +329,184 @@ function DocsTab({ clientId, kind }: { clientId: string; kind: "contract" | "inv
 }
 
 // ============ TELEGRAM CHAT ============
-function TelegramTab({ client }: { client: any }) {
+function TelegramTab({ client, reload }: { client: any; reload: () => Promise<void> }) {
   const { t } = useTranslation();
   const link = client?.telegram_archive_link;
+  const zips: string[] = client?.telegram_archive_zips || [];
+  const [uploading, setUploading] = useState(false);
+  const [viewing, setViewing] = useState<string | null>(null);
+  const [archiveHtml, setArchiveHtml] = useState<string | null>(null);
+  const [archiveFiles, setArchiveFiles] = useState<{ name: string; blobUrl: string }[]>([]);
+  const [loadingArchive, setLoadingArchive] = useState(false);
+
+  const onUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    if (!file.name.toLowerCase().endsWith(".zip")) {
+      return toast.error("ZIP only");
+    }
+    setUploading(true);
+    try {
+      const path = await uploadFile(`telegram/${client.id}`, file);
+      const next = [...zips, path];
+      const { error } = await supabase.from("clients").update({ telegram_archive_zips: next }).eq("id", client.id);
+      if (error) throw error;
+      toast.success(t("saved"));
+      await reload();
+    } catch (err: any) {
+      toast.error(err.message);
+    } finally {
+      setUploading(false);
+      e.target.value = "";
+    }
+  };
+
+  const removeZip = async (path: string) => {
+    if (!confirm(t("confirm_delete"))) return;
+    await supabase.storage.from("documents").remove([path]);
+    const next = zips.filter(z => z !== path);
+    await supabase.from("clients").update({ telegram_archive_zips: next }).eq("id", client.id);
+    await reload();
+  };
+
+  const viewArchive = async (path: string) => {
+    setViewing(path);
+    setLoadingArchive(true);
+    setArchiveHtml(null);
+    archiveFiles.forEach(f => URL.revokeObjectURL(f.blobUrl));
+    setArchiveFiles([]);
+    try {
+      const { data, error } = await supabase.storage.from("documents").download(path);
+      if (error) throw error;
+      const zip = await JSZip.loadAsync(await data.arrayBuffer());
+
+      // Build blob URLs for assets first
+      const fileMap: Record<string, string> = {};
+      const fileList: { name: string; blobUrl: string }[] = [];
+      const entries = Object.values(zip.files).filter(f => !f.dir);
+      for (const entry of entries) {
+        const lower = entry.name.toLowerCase();
+        if (lower.endsWith(".html") || lower.endsWith(".htm")) continue;
+        const blob = await entry.async("blob");
+        const url = URL.createObjectURL(blob);
+        fileMap[entry.name] = url;
+        fileList.push({ name: entry.name, blobUrl: url });
+      }
+      setArchiveFiles(fileList);
+
+      // Find main messages.html (or first html)
+      const htmlEntry =
+        zip.file(/messages\.html$/i)[0] ||
+        zip.file(/\.html?$/i)[0];
+      if (htmlEntry) {
+        let html = await htmlEntry.async("string");
+        // Rewrite relative asset paths to blob URLs
+        const baseDir = htmlEntry.name.includes("/") ? htmlEntry.name.replace(/[^/]+$/, "") : "";
+        html = html.replace(/(href|src)="([^"#?][^"#?]*?)"/g, (_m, attr, p) => {
+          const candidate = baseDir + p;
+          const normalized = candidate.replace(/^\.\//, "");
+          const found = fileMap[normalized] || fileMap[p];
+          return `${attr}="${found || p}"`;
+        });
+        setArchiveHtml(html);
+      } else {
+        setArchiveHtml("<p style='padding:1rem;font-family:sans-serif'>No HTML found in archive.</p>");
+      }
+    } catch (err: any) {
+      toast.error(err.message);
+      setArchiveHtml(`<p style='padding:1rem;color:red'>${err.message}</p>`);
+    } finally {
+      setLoadingArchive(false);
+    }
+  };
+
+  const closeViewer = () => {
+    archiveFiles.forEach(f => URL.revokeObjectURL(f.blobUrl));
+    setArchiveFiles([]);
+    setArchiveHtml(null);
+    setViewing(null);
+  };
+
+  const downloadZip = async (path: string) => {
+    const url = await getSignedUrl(path);
+    if (url) window.open(url, "_blank");
+  };
+
   return (
-    <Card>
-      <CardContent className="pt-6">
-        <Label className="text-xs text-muted-foreground">{t("telegram_archive")}</Label>
-        {link ? (
-          <div className="flex items-center gap-2 mt-2">
-            <Send className="h-5 w-5 text-primary" />
-            <a href={link} target="_blank" rel="noreferrer" className="text-primary hover:underline break-all">{link}</a>
-            <Button size="sm" variant="outline" onClick={() => window.open(link, "_blank")}><ExternalLink className="h-3 w-3 mr-1" />{t("view")}</Button>
+    <div className="space-y-4">
+      <Card>
+        <CardContent className="pt-6 space-y-4">
+          <div>
+            <Label className="text-xs text-muted-foreground">{t("telegram_archive")} ({t("link")})</Label>
+            {link ? (
+              <div className="flex items-center gap-2 mt-2">
+                <Send className="h-5 w-5 text-primary" />
+                <a href={link} target="_blank" rel="noreferrer" className="text-primary hover:underline break-all">{link}</a>
+                <Button size="sm" variant="outline" onClick={() => window.open(link, "_blank")}><ExternalLink className="h-3 w-3 mr-1" />{t("view")}</Button>
+              </div>
+            ) : (
+              <div className="text-muted-foreground text-sm mt-2">—</div>
+            )}
           </div>
-        ) : (
-          <div className="text-muted-foreground text-sm mt-2">{t("no_data")}</div>
-        )}
-      </CardContent>
-    </Card>
+
+          <div>
+            <div className="flex items-center justify-between mb-2">
+              <Label className="text-xs text-muted-foreground">{t("telegram_zips")}</Label>
+              <label className="inline-flex items-center gap-2 cursor-pointer text-sm border rounded px-3 py-1.5 hover:bg-muted">
+                {uploading ? <Loader2 className="h-4 w-4 animate-spin" /> : <Upload className="h-4 w-4" />}
+                {t("upload_zip")}
+                <input type="file" accept=".zip" className="hidden" onChange={onUpload} disabled={uploading} />
+              </label>
+            </div>
+            {zips.length === 0 ? (
+              <div className="text-muted-foreground text-sm">{t("no_data")}</div>
+            ) : (
+              <div className="space-y-2">
+                {zips.map((p, i) => {
+                  const fileName = p.split("/").pop() || p;
+                  return (
+                    <div key={p} className="flex items-center gap-2 border rounded px-3 py-2">
+                      <FileArchive className="h-4 w-4 text-muted-foreground" />
+                      <div className="flex-1 truncate text-sm">Archive #{i + 1} — {fileName}</div>
+                      <Button size="sm" variant="outline" onClick={() => viewArchive(p)}>
+                        <ExternalLink className="h-3 w-3 mr-1" />{t("view")}
+                      </Button>
+                      <Button size="sm" variant="outline" onClick={() => downloadZip(p)}>
+                        <Download className="h-3 w-3" />
+                      </Button>
+                      <Button size="sm" variant="ghost" onClick={() => removeZip(p)}>
+                        <Trash2 className="h-3 w-3 text-destructive" />
+                      </Button>
+                    </div>
+                  );
+                })}
+              </div>
+            )}
+          </div>
+        </CardContent>
+      </Card>
+
+      <Dialog open={!!viewing} onOpenChange={(o) => !o && closeViewer()}>
+        <DialogContent className="max-w-6xl w-[95vw] h-[90vh] p-0 flex flex-col">
+          <DialogHeader className="p-4 border-b">
+            <DialogTitle className="flex items-center gap-2">
+              <FileArchive className="h-4 w-4" />{t("telegram_chat")}
+            </DialogTitle>
+          </DialogHeader>
+          <div className="flex-1 overflow-hidden bg-muted/20">
+            {loadingArchive ? (
+              <div className="flex items-center justify-center h-full"><Loader2 className="h-6 w-6 animate-spin text-muted-foreground" /></div>
+            ) : archiveHtml ? (
+              <iframe
+                title="telegram-archive"
+                srcDoc={archiveHtml}
+                sandbox="allow-same-origin allow-popups"
+                className="w-full h-full bg-white"
+              />
+            ) : null}
+          </div>
+        </DialogContent>
+      </Dialog>
+    </div>
   );
 }
