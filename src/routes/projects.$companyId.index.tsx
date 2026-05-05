@@ -3,7 +3,7 @@ import { useEffect, useState } from "react";
 import { useTranslation } from "react-i18next";
 import { PageHeader } from "@/components/PageHeader";
 import { Card, CardContent } from "@/components/ui/card";
-import { ArrowLeft, BarChart3, CreditCard, FileText, MessageSquare, Receipt, Settings } from "lucide-react";
+import { ArrowLeft, BarChart3, CreditCard, FileText, MessageSquare, Receipt, Settings, Users } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { getSignedUrl } from "@/lib/storage";
 
@@ -27,6 +27,7 @@ function CompanyIndex() {
 
   const sections = [
     { key: "cpa", label: t("cpa_results"), icon: BarChart3 },
+    { key: "workers", label: t("workers") || "Ishchilar", icon: Users },
     { key: "payments", label: t("payments"), icon: CreditCard },
     { key: "contracts", label: t("contracts"), icon: FileText },
     { key: "telegram", label: t("telegram_chat"), icon: MessageSquare },
