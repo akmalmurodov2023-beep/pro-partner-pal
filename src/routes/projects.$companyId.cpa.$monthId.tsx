@@ -19,6 +19,11 @@ export const Route = createFileRoute("/projects/$companyId/cpa/$monthId")({
 });
 
 const pad = (n: number) => String(n).padStart(2, "0");
+const fmt = (n: number | string) => {
+  const num = Number(String(n).replace(/\s/g, "")) || 0;
+  return num.toString().replace(/\B(?=(\d{3})+(?!\d))/g, " ");
+};
+const parseNum = (s: string) => Number(String(s).replace(/\s/g, "")) || 0;
 
 function MonthDetailPage() {
   const { t } = useTranslation();
@@ -30,7 +35,7 @@ function MonthDetailPage() {
   const [search, setSearch] = useState("");
   const [dlgOpen, setDlgOpen] = useState(false);
   const [editIdx, setEditIdx] = useState<number | null>(null);
-  const [form, setForm] = useState<any>({ worker_id: "", promo_code: "", results: "", salary: 0, paid_status: "unpaid" });
+  const [form, setForm] = useState<any>({ worker_id: "", promo_code: "", results: "", salary: "", paid_amount: "", paid_status: "unpaid" });
 
   useEffect(() => {
     (async () => {
@@ -71,7 +76,7 @@ function MonthDetailPage() {
 
   const openAdd = () => {
     setEditIdx(null);
-    setForm({ worker_id: "", promo_code: "", results: "", salary: 0, paid_status: "unpaid" });
+    setForm({ worker_id: "", promo_code: "", results: "", salary: "", paid_amount: "", paid_status: "unpaid" });
     setDlgOpen(true);
   };
   const openEdit = (i: number) => {
@@ -82,7 +87,8 @@ function MonthDetailPage() {
       worker_id: w?.id || "",
       promo_code: r.promo_code || "",
       results: r.results || "",
-      salary: Number(r.salary) || 0,
+      salary: fmt(r.salary || 0),
+      paid_amount: fmt(r.paid_amount || 0),
       paid_status: r.paid_status || "unpaid",
     });
     setDlgOpen(true);
@@ -102,7 +108,8 @@ function MonthDetailPage() {
       worker: w.full_name,
       promo_code: form.promo_code || "",
       results: form.results || "",
-      salary: Number(form.salary) || 0,
+      salary: parseNum(form.salary),
+      paid_amount: parseNum(form.paid_amount),
       paid_status: form.paid_status || "unpaid",
     };
     const next = [...rows];
@@ -164,7 +171,7 @@ function MonthDetailPage() {
                 <TableRow><TableCell colSpan={8} className="text-center text-muted-foreground py-6">{t("no_data")}</TableCell></TableRow>
               ) : filtered.map(({ row: b, idx: i }) => {
                 const expected = Number(b.salary || 0);
-                const paid = paidForWorker(b.worker || "");
+                const paid = Number(b.paid_amount || 0) || paidForWorker(b.worker || "");
                 const ok = b.paid_status === "paid" || (paid >= expected && expected > 0);
                 return (
                   <TableRow key={i} className="cursor-pointer" onDoubleClick={() => openEdit(i)}>
@@ -172,8 +179,8 @@ function MonthDetailPage() {
                     <TableCell className="font-medium">{b.worker || "—"}</TableCell>
                     <TableCell>{b.promo_code || "—"}</TableCell>
                     <TableCell>{b.results || "—"}</TableCell>
-                    <TableCell className="text-right">{expected.toLocaleString()}</TableCell>
-                    <TableCell className="text-right">{paid.toLocaleString()}</TableCell>
+                    <TableCell className="text-right">{fmt(expected)}</TableCell>
+                    <TableCell className="text-right">{fmt(paid)}</TableCell>
                     <TableCell className="text-center">
                       {ok ? (
                         <span className="inline-flex items-center justify-center h-6 w-6 bg-green-500/15 text-green-600">
@@ -223,7 +230,11 @@ function MonthDetailPage() {
             </div>
             <div>
               <Label>{t("amount")}</Label>
-              <Input type="number" value={form.salary} onChange={(e) => setForm({ ...form, salary: e.target.value })} />
+              <Input inputMode="numeric" value={form.salary} onChange={(e) => setForm({ ...form, salary: fmt(e.target.value) })} />
+            </div>
+            <div>
+              <Label>{t("paid")}</Label>
+              <Input inputMode="numeric" value={form.paid_amount} onChange={(e) => setForm({ ...form, paid_amount: fmt(e.target.value) })} />
             </div>
             <div>
               <Label>{t("paid_status")}</Label>
