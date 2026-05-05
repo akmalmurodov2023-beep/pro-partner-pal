@@ -8,6 +8,7 @@ import { Label } from "@/components/ui/label";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
+import { ContextMenu, ContextMenuContent, ContextMenuItem, ContextMenuTrigger } from "@/components/ui/context-menu";
 import { PageHeader } from "@/components/PageHeader";
 import { supabase } from "@/integrations/supabase/client";
 import { openFile, uploadFile } from "@/lib/storage";
@@ -133,9 +134,29 @@ function MonthDetailPage() {
         <PageHeader title={month ? `${MONTHS[month.month - 1]} ${month.year} — ${t("results")}` : t("results")} />
         <div className="flex items-center gap-2">
           {docs.map((p, i) => (
-            <Button key={i} size="sm" variant="outline" onClick={() => openFile(p)}>
-              <Download className="h-3 w-3 mr-1" />File {i + 1}
-            </Button>
+            <ContextMenu key={i}>
+              <ContextMenuTrigger asChild>
+                <Button size="sm" variant="outline" onClick={() => openFile(p)}>
+                  <Download className="h-3 w-3 mr-1" />File {i + 1}
+                </Button>
+              </ContextMenuTrigger>
+              <ContextMenuContent>
+                <ContextMenuItem
+                  className="text-destructive"
+                  onClick={async () => {
+                    if (!confirm(t("confirm_delete"))) return;
+                    const next = docs.filter((_, idx) => idx !== i);
+                    const { error } = await supabase.from("monthly_results").update({ uploaded_docs_urls: next }).eq("id", monthId);
+                    if (error) return toast.error(error.message);
+                    await supabase.storage.from("documents").remove([p]);
+                    setMonth({ ...month, uploaded_docs_urls: next });
+                    toast.success(t("saved"));
+                  }}
+                >
+                  <Trash2 className="h-4 w-4 mr-2" />{t("delete")}
+                </ContextMenuItem>
+              </ContextMenuContent>
+            </ContextMenu>
           ))}
           <label>
             <input
