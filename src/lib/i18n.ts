@@ -93,6 +93,7 @@ const resources = {
       results_btn: "Natijalar",
       bloggers: "Blogerlar",
       promocode: "Promokod",
+      paid: "To'langan",
     },
   },
   ru: {
@@ -186,6 +187,7 @@ const resources = {
       results_btn: "Результаты",
       bloggers: "Блогеры",
       promocode: "Промокод",
+      paid: "Оплачено",
     },
   },
 };
