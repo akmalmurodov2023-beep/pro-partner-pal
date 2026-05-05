@@ -8,7 +8,7 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Textarea } from "@/components/ui/textarea";
-import { Plus, Upload, FileText, Trash2, ExternalLink, Send, FileArchive, Download, Loader2 } from "lucide-react";
+import { Plus, Upload, FileText, Trash2, ExternalLink, Send, FileArchive, Download, Loader2, Check, X } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { uploadFile, openFile, getSignedUrl } from "@/lib/storage";
 import { toast } from "sonner";
@@ -23,9 +23,10 @@ export function CpaTab({ clientId }: { clientId: string }) {
   const [open, setOpen] = useState(false);
   const [editing, setEditing] = useState<any>(null);
   const [resultsJson, setResultsJson] = useState("");
-  const [bloggersOpen, setBloggersOpen] = useState(false);
-  const [bloggersList, setBloggersList] = useState<any[]>([]);
-  const [bloggersTitle, setBloggersTitle] = useState("");
+  const [detailsOpen, setDetailsOpen] = useState(false);
+  const [detailsMonth, setDetailsMonth] = useState<any>(null);
+  const [monthPayments, setMonthPayments] = useState<any[]>([]);
+  const [workersList, setWorkersList] = useState<any[]>([]);
 
   const load = async () => {
     const { data } = await supabase.from("monthly_results").select("*").eq("client_id", clientId).order("year", { ascending: false }).order("month", { ascending: false });
@@ -60,11 +61,24 @@ export function CpaTab({ clientId }: { clientId: string }) {
     const last = new Date(year, month, 0).getDate();
     return `${pad(1)}.${pad(month)}.${year} - ${pad(last)}.${pad(month)}.${year}`;
   };
-  const showBloggers = (m: any) => {
-    const rows = Array.isArray(m.results_table_data) ? m.results_table_data : [];
-    setBloggersList(rows);
-    setBloggersTitle(`${MONTHS[m.month - 1]} ${m.year}`);
-    setBloggersOpen(true);
+  const openDetails = async (m: any) => {
+    setDetailsMonth(m);
+    setDetailsOpen(true);
+    const last = new Date(m.year, m.month, 0).getDate();
+    const start = `${m.year}-${pad(m.month)}-01`;
+    const end = `${m.year}-${pad(m.month)}-${pad(last)}`;
+    const [pRes, wRes] = await Promise.all([
+      supabase.from("payments").select("*").eq("client_id", clientId).gte("payment_date", start).lte("payment_date", end),
+      supabase.from("workers").select("id,full_name"),
+    ]);
+    setMonthPayments(pRes.data || []);
+    setWorkersList(wRes.data || []);
+  };
+  const paidForWorker = (workerName: string) => {
+    if (!workerName) return 0;
+    const w = workersList.find(x => (x.full_name || "").trim().toLowerCase() === workerName.trim().toLowerCase());
+    if (!w) return 0;
+    return monthPayments.filter(p => p.worker_id === w.id).reduce((s, p) => s + Number(p.amount || 0), 0);
   };
 
   return (
@@ -89,14 +103,14 @@ export function CpaTab({ clientId }: { clientId: string }) {
               {sorted.map(m => {
                 const count = Array.isArray(m.results_table_data) ? m.results_table_data.length : 0;
                 return (
-                  <TableRow key={m.id}>
+                  <TableRow key={m.id} onDoubleClick={() => openDetails(m)} className="cursor-pointer">
                     <TableCell className="font-medium">{MONTHS[m.month - 1]} {m.year}</TableCell>
                     <TableCell className="text-muted-foreground">{monthRange(m.year, m.month)}</TableCell>
                     <TableCell>
-                      <Button size="sm" variant="outline" onClick={() => showBloggers(m)}>{count}</Button>
+                      <Button size="sm" variant="outline" onClick={(e) => { e.stopPropagation(); openDetails(m); }}>{count}</Button>
                     </TableCell>
                     <TableCell className="text-right">
-                      <Button size="sm" variant="outline" onClick={() => editMonth(m)}>
+                      <Button size="sm" variant="outline" onClick={(e) => { e.stopPropagation(); openDetails(m); }}>
                         <FileText className="h-3 w-3 mr-1" />{t("results_btn")}
                       </Button>
                     </TableCell>
@@ -132,33 +146,73 @@ export function CpaTab({ clientId }: { clientId: string }) {
         </DialogContent>
       </Dialog>
 
-      <Dialog open={bloggersOpen} onOpenChange={setBloggersOpen}>
-        <DialogContent className="max-w-2xl">
-          <DialogHeader><DialogTitle>{t("bloggers")} — {bloggersTitle}</DialogTitle></DialogHeader>
+      <Dialog open={detailsOpen} onOpenChange={setDetailsOpen}>
+        <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto">
+          <DialogHeader>
+            <div className="flex items-center justify-between gap-2 pr-8">
+              <DialogTitle>
+                {detailsMonth ? `${MONTHS[detailsMonth.month - 1]} ${detailsMonth.year} — ${t("results")}` : ""}
+              </DialogTitle>
+              <div className="flex items-center gap-2">
+                {(detailsMonth?.uploaded_docs_urls || []).map((p: string, i: number) => (
+                  <Button key={i} size="sm" variant="outline" onClick={() => openFile(p)}>
+                    <Download className="h-3 w-3 mr-1" />File {i + 1}
+                  </Button>
+                ))}
+                {detailsMonth && (
+                  <Button size="sm" variant="outline" onClick={() => { setDetailsOpen(false); editMonth(detailsMonth); }}>
+                    <FileText className="h-3 w-3 mr-1" />{t("edit")}
+                  </Button>
+                )}
+              </div>
+            </div>
+          </DialogHeader>
           <div className="border overflow-x-auto">
             <Table>
               <TableHeader>
                 <TableRow>
                   <TableHead>#</TableHead>
-                  <TableHead>{t("worker")}</TableHead>
+                  <TableHead>{t("bloggers")}</TableHead>
                   <TableHead>{t("promocode")}</TableHead>
                   <TableHead>{t("results")}</TableHead>
                   <TableHead className="text-right">{t("amount")}</TableHead>
+                  <TableHead className="text-right">{t("paid")}</TableHead>
+                  <TableHead className="text-center">{t("status")}</TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>
-                {bloggersList.length === 0 && (
-                  <TableRow><TableCell colSpan={5} className="text-center text-muted-foreground py-6">{t("no_data")}</TableCell></TableRow>
-                )}
-                {bloggersList.map((b: any, i: number) => (
-                  <TableRow key={i}>
-                    <TableCell>{i + 1}</TableCell>
-                    <TableCell>{b.worker || "—"}</TableCell>
-                    <TableCell>{b.promo_code || "—"}</TableCell>
-                    <TableCell>{b.results || "—"}</TableCell>
-                    <TableCell className="text-right">{Number(b.salary || 0).toLocaleString()}</TableCell>
-                  </TableRow>
-                ))}
+                {(() => {
+                  const rows: any[] = Array.isArray(detailsMonth?.results_table_data) ? detailsMonth!.results_table_data : [];
+                  if (rows.length === 0) return (
+                    <TableRow><TableCell colSpan={7} className="text-center text-muted-foreground py-6">{t("no_data")}</TableCell></TableRow>
+                  );
+                  return rows.map((b: any, i: number) => {
+                    const expected = Number(b.salary || 0);
+                    const paid = paidForWorker(b.worker || "");
+                    const ok = paid >= expected && expected > 0;
+                    return (
+                      <TableRow key={i}>
+                        <TableCell>{i + 1}</TableCell>
+                        <TableCell className="font-medium">{b.worker || "—"}</TableCell>
+                        <TableCell>{b.promo_code || "—"}</TableCell>
+                        <TableCell>{b.results || "—"}</TableCell>
+                        <TableCell className="text-right">{expected.toLocaleString()}</TableCell>
+                        <TableCell className="text-right">{paid.toLocaleString()}</TableCell>
+                        <TableCell className="text-center">
+                          {ok ? (
+                            <span className="inline-flex items-center justify-center h-6 w-6 bg-green-500/15 text-green-600">
+                              <Check className="h-4 w-4" />
+                            </span>
+                          ) : (
+                            <span className="inline-flex items-center justify-center h-6 w-6 bg-destructive/15 text-destructive">
+                              <X className="h-4 w-4" />
+                            </span>
+                          )}
+                        </TableCell>
+                      </TableRow>
+                    );
+                  });
+                })()}
               </TableBody>
             </Table>
           </div>
