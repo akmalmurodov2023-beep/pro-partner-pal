@@ -100,7 +100,7 @@ function ClientsPage() {
         <Button onClick={openNew}><Plus className="h-4 w-4 mr-2" />{t("add")}</Button>
       } />
       <div className="mb-4"><Input placeholder={t("search")} value={search} onChange={(e) => setSearch(e.target.value)} className="max-w-sm" /></div>
-      <div className="border rounded-lg bg-card overflow-x-auto">
+      <div className="border bg-card overflow-x-auto">
         <Table>
           <TableHeader>
             <TableRow>
