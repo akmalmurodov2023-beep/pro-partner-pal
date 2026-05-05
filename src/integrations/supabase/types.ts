@@ -151,6 +151,27 @@ export type Database = {
           },
         ]
       }
+      project_workers: {
+        Row: {
+          client_id: string
+          created_at: string
+          id: string
+          worker_id: string
+        }
+        Insert: {
+          client_id: string
+          created_at?: string
+          id?: string
+          worker_id: string
+        }
+        Update: {
+          client_id?: string
+          created_at?: string
+          id?: string
+          worker_id?: string
+        }
+        Relationships: []
+      }
       projects: {
         Row: {
           client_id: string | null
