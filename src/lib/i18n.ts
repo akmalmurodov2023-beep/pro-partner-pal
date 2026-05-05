@@ -99,6 +99,9 @@ const resources = {
       paid_status: "To'lov holati",
       paid_yes: "To'landi",
       paid_no: "Qarzdorlik",
+      total_amount: "Umumiy summa",
+      total_paid: "To'langan summa",
+      profit: "Foyda",
     },
   },
   ru: {
@@ -198,6 +201,9 @@ const resources = {
       paid_status: "Статус оплаты",
       paid_yes: "Оплачено",
       paid_no: "Задолженность",
+      total_amount: "Общая сумма",
+      total_paid: "Оплачено всего",
+      profit: "Прибыль",
     },
   },
 };
