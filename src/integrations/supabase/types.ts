@@ -21,6 +21,7 @@ export type Database = {
           created_at: string
           id: string
           inn: string | null
+          logo_url: string | null
           telegram_archive_link: string | null
           updated_at: string
         }
@@ -30,6 +31,7 @@ export type Database = {
           created_at?: string
           id?: string
           inn?: string | null
+          logo_url?: string | null
           telegram_archive_link?: string | null
           updated_at?: string
         }
@@ -39,6 +41,7 @@ export type Database = {
           created_at?: string
           id?: string
           inn?: string | null
+          logo_url?: string | null
           telegram_archive_link?: string | null
           updated_at?: string
         }
@@ -212,7 +215,9 @@ export type Database = {
       workers: {
         Row: {
           created_at: string
+          e_signature_file_url: string | null
           e_signature_key: string | null
+          e_signature_password: string | null
           full_name: string
           id: string
           passport_series_number: string | null
@@ -227,7 +232,9 @@ export type Database = {
         }
         Insert: {
           created_at?: string
+          e_signature_file_url?: string | null
           e_signature_key?: string | null
+          e_signature_password?: string | null
           full_name: string
           id?: string
           passport_series_number?: string | null
@@ -242,7 +249,9 @@ export type Database = {
         }
         Update: {
           created_at?: string
+          e_signature_file_url?: string | null
           e_signature_key?: string | null
+          e_signature_password?: string | null
           full_name?: string
           id?: string
           passport_series_number?: string | null
