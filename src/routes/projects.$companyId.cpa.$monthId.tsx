@@ -194,14 +194,14 @@ function MonthDetailPage() {
               ) : filtered.map(({ row: b, idx: i }) => {
                 const expected = Number(b.salary || 0);
                 const paid = Number(b.paid_amount || 0) || paidForWorker(b.worker || "");
-                const ok = b.paid_status === "paid" || (paid >= expected && expected > 0);
+                const ok = b.paid_status === "paid";
                 return (
                   <TableRow key={i} className="cursor-pointer" onDoubleClick={() => openEdit(i)}>
                     <TableCell>{i + 1}</TableCell>
                     <TableCell className="font-medium">{b.worker || "—"}</TableCell>
                     <TableCell>
                       {b.promo_code ? (
-                        <span className="inline-flex items-center rounded-full border border-primary/30 bg-primary/10 text-primary px-2.5 py-0.5 text-xs font-medium">
+                        <span className="inline-flex items-center rounded-full border border-primary/30 bg-primary/10 text-primary px-3 py-1 text-xs font-medium">
                           {b.promo_code}
                         </span>
                       ) : "—"}
