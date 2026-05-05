@@ -21,6 +21,7 @@ import { Route as ProjectsCompanyIdRouteImport } from './routes/projects.$compan
 import { Route as ClientsClientIdRouteImport } from './routes/clients.$clientId'
 import { Route as ProjectsCompanyIdIndexRouteImport } from './routes/projects.$companyId.index'
 import { Route as ProjectsCompanyIdSectionRouteImport } from './routes/projects.$companyId.$section'
+import { Route as ProjectsCompanyIdCpaMonthIdRouteImport } from './routes/projects.$companyId.cpa.$monthId'
 
 const WorkersRoute = WorkersRouteImport.update({
   id: '/workers',
@@ -83,6 +84,12 @@ const ProjectsCompanyIdSectionRoute =
     path: '/$section',
     getParentRoute: () => ProjectsCompanyIdRoute,
   } as any)
+const ProjectsCompanyIdCpaMonthIdRoute =
+  ProjectsCompanyIdCpaMonthIdRouteImport.update({
+    id: '/cpa/$monthId',
+    path: '/cpa/$monthId',
+    getParentRoute: () => ProjectsCompanyIdRoute,
+  } as any)
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
@@ -97,6 +104,7 @@ export interface FileRoutesByFullPath {
   '/projects/': typeof ProjectsIndexRoute
   '/projects/$companyId/$section': typeof ProjectsCompanyIdSectionRoute
   '/projects/$companyId/': typeof ProjectsCompanyIdIndexRoute
+  '/projects/$companyId/cpa/$monthId': typeof ProjectsCompanyIdCpaMonthIdRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
@@ -109,6 +117,7 @@ export interface FileRoutesByTo {
   '/projects': typeof ProjectsIndexRoute
   '/projects/$companyId/$section': typeof ProjectsCompanyIdSectionRoute
   '/projects/$companyId': typeof ProjectsCompanyIdIndexRoute
+  '/projects/$companyId/cpa/$monthId': typeof ProjectsCompanyIdCpaMonthIdRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
@@ -124,6 +133,7 @@ export interface FileRoutesById {
   '/projects/': typeof ProjectsIndexRoute
   '/projects/$companyId/$section': typeof ProjectsCompanyIdSectionRoute
   '/projects/$companyId/': typeof ProjectsCompanyIdIndexRoute
+  '/projects/$companyId/cpa/$monthId': typeof ProjectsCompanyIdCpaMonthIdRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
@@ -140,6 +150,7 @@ export interface FileRouteTypes {
     | '/projects/'
     | '/projects/$companyId/$section'
     | '/projects/$companyId/'
+    | '/projects/$companyId/cpa/$monthId'
   fileRoutesByTo: FileRoutesByTo
   to:
     | '/'
@@ -152,6 +163,7 @@ export interface FileRouteTypes {
     | '/projects'
     | '/projects/$companyId/$section'
     | '/projects/$companyId'
+    | '/projects/$companyId/cpa/$monthId'
   id:
     | '__root__'
     | '/'
@@ -166,6 +178,7 @@ export interface FileRouteTypes {
     | '/projects/'
     | '/projects/$companyId/$section'
     | '/projects/$companyId/'
+    | '/projects/$companyId/cpa/$monthId'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
@@ -264,6 +277,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof ProjectsCompanyIdSectionRouteImport
       parentRoute: typeof ProjectsCompanyIdRoute
     }
+    '/projects/$companyId/cpa/$monthId': {
+      id: '/projects/$companyId/cpa/$monthId'
+      path: '/cpa/$monthId'
+      fullPath: '/projects/$companyId/cpa/$monthId'
+      preLoaderRoute: typeof ProjectsCompanyIdCpaMonthIdRouteImport
+      parentRoute: typeof ProjectsCompanyIdRoute
+    }
   }
 }
 
@@ -281,11 +301,13 @@ const ClientsRouteWithChildren =
 interface ProjectsCompanyIdRouteChildren {
   ProjectsCompanyIdSectionRoute: typeof ProjectsCompanyIdSectionRoute
   ProjectsCompanyIdIndexRoute: typeof ProjectsCompanyIdIndexRoute
+  ProjectsCompanyIdCpaMonthIdRoute: typeof ProjectsCompanyIdCpaMonthIdRoute
 }
 
 const ProjectsCompanyIdRouteChildren: ProjectsCompanyIdRouteChildren = {
   ProjectsCompanyIdSectionRoute: ProjectsCompanyIdSectionRoute,
   ProjectsCompanyIdIndexRoute: ProjectsCompanyIdIndexRoute,
+  ProjectsCompanyIdCpaMonthIdRoute: ProjectsCompanyIdCpaMonthIdRoute,
 }
 
 const ProjectsCompanyIdRouteWithChildren =
