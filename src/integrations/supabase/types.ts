@@ -223,6 +223,7 @@ export type Database = {
       }
       workers: {
         Row: {
+          avatar_url: string | null
           birth_date: string | null
           created_at: string
           e_signature_file_url: string | null
@@ -245,6 +246,7 @@ export type Database = {
           updated_at: string
         }
         Insert: {
+          avatar_url?: string | null
           birth_date?: string | null
           created_at?: string
           e_signature_file_url?: string | null
@@ -267,6 +269,7 @@ export type Database = {
           updated_at?: string
         }
         Update: {
+          avatar_url?: string | null
           birth_date?: string | null
           created_at?: string
           e_signature_file_url?: string | null
