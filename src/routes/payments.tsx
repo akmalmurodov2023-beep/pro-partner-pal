@@ -18,6 +18,12 @@ import { MONTHS } from "@/components/company/sections";
 
 export const Route = createFileRoute("/payments")({ component: () => <AppLayout><Payments /></AppLayout> });
 
+const fmtNum = (n: number | string) => {
+  const num = Number(String(n).replace(/\s/g, "")) || 0;
+  return num.toString().replace(/\B(?=(\d{3})+(?!\d))/g, " ");
+};
+const parseNum = (s: string) => Number(String(s).replace(/\s/g, "")) || 0;
+
 type Pay = { id: string; worker_id: string | null; client_id: string | null; amount: number; payment_date: string; receipt_url: string | null; payment_type: string | null; notes: string | null; target_year: number | null; target_month: number | null; created_at?: string };
 
 function Payments() {
@@ -144,7 +150,7 @@ function Payments() {
                 <TableCell>{p.payment_date}</TableCell>
                 <TableCell>{wn(p.worker_id)}</TableCell>
                 <TableCell>{cn(p.client_id)}</TableCell>
-                <TableCell className="font-medium">{Number(p.amount).toLocaleString()}</TableCell>
+                <TableCell className="font-medium">{fmtNum(p.amount)}</TableCell>
                 <TableCell>{p.payment_type === "card" ? t("card") : p.payment_type === "cash" ? t("cash") : (p.payment_type || "—")}</TableCell>
                 <TableCell>{p.receipt_url ? <Button size="sm" variant="ghost" onClick={() => openFile(p.receipt_url!)}><FileText className="h-4 w-4" /></Button> : "—"}</TableCell>
                 <TableCell className="text-right">
@@ -174,7 +180,7 @@ function Payments() {
                   <SelectContent>{clients.map(c => <SelectItem key={c.id} value={c.id}>{c.company_name}</SelectItem>)}</SelectContent>
                 </Select>
               </div>
-              <div className="space-y-1"><Label>{t("amount")}</Label><Input type="number" step="0.01" value={editing.amount ?? 0} onChange={(e) => setEditing({ ...editing, amount: Number(e.target.value) })} /></div>
+              <div className="space-y-1"><Label>{t("amount")}</Label><Input inputMode="numeric" value={fmtNum(editing.amount ?? 0)} onChange={(e) => setEditing({ ...editing, amount: parseNum(e.target.value) })} /></div>
               <div className="space-y-1"><Label>{t("target_month")}</Label>
                 <div className="grid grid-cols-2 gap-2">
                   <Select value={String(editing.target_year || now.getFullYear())} onValueChange={(v) => setEditing({ ...editing, target_year: Number(v) })}>
