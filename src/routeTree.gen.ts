@@ -9,13 +9,13 @@
 // Additionally, you should also exclude this file from your linter and/or formatter to prevent it from being checked or modified.
 
 import { Route as rootRouteImport } from './routes/__root'
-import { Route as WorkersRouteImport } from './routes/workers'
 import { Route as ReportsRouteImport } from './routes/reports'
 import { Route as ProjectsRouteImport } from './routes/projects'
 import { Route as PaymentsRouteImport } from './routes/payments'
 import { Route as LoginRouteImport } from './routes/login'
 import { Route as ClientsRouteImport } from './routes/clients'
 import { Route as IndexRouteImport } from './routes/index'
+import { Route as WorkersIndexRouteImport } from './routes/workers.index'
 import { Route as ProjectsIndexRouteImport } from './routes/projects.index'
 import { Route as WorkersWorkerIdRouteImport } from './routes/workers.$workerId'
 import { Route as ProjectsCompanyIdRouteImport } from './routes/projects.$companyId'
@@ -24,11 +24,6 @@ import { Route as ProjectsCompanyIdIndexRouteImport } from './routes/projects.$c
 import { Route as ProjectsCompanyIdSectionRouteImport } from './routes/projects.$companyId.$section'
 import { Route as ProjectsCompanyIdCpaMonthIdRouteImport } from './routes/projects.$companyId.cpa.$monthId'
 
-const WorkersRoute = WorkersRouteImport.update({
-  id: '/workers',
-  path: '/workers',
-  getParentRoute: () => rootRouteImport,
-} as any)
 const ReportsRoute = ReportsRouteImport.update({
   id: '/reports',
   path: '/reports',
@@ -57,6 +52,11 @@ const ClientsRoute = ClientsRouteImport.update({
 const IndexRoute = IndexRouteImport.update({
   id: '/',
   path: '/',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const WorkersIndexRoute = WorkersIndexRouteImport.update({
+  id: '/workers/',
+  path: '/workers/',
   getParentRoute: () => rootRouteImport,
 } as any)
 const ProjectsIndexRoute = ProjectsIndexRouteImport.update({
@@ -104,11 +104,11 @@ export interface FileRoutesByFullPath {
   '/payments': typeof PaymentsRoute
   '/projects': typeof ProjectsRouteWithChildren
   '/reports': typeof ReportsRoute
-  '/workers': typeof WorkersRouteWithChildren
   '/clients/$clientId': typeof ClientsClientIdRoute
   '/projects/$companyId': typeof ProjectsCompanyIdRouteWithChildren
   '/workers/$workerId': typeof WorkersWorkerIdRoute
   '/projects/': typeof ProjectsIndexRoute
+  '/workers/': typeof WorkersIndexRoute
   '/projects/$companyId/$section': typeof ProjectsCompanyIdSectionRoute
   '/projects/$companyId/': typeof ProjectsCompanyIdIndexRoute
   '/projects/$companyId/cpa/$monthId': typeof ProjectsCompanyIdCpaMonthIdRoute
@@ -119,10 +119,10 @@ export interface FileRoutesByTo {
   '/login': typeof LoginRoute
   '/payments': typeof PaymentsRoute
   '/reports': typeof ReportsRoute
-  '/workers': typeof WorkersRouteWithChildren
   '/clients/$clientId': typeof ClientsClientIdRoute
   '/workers/$workerId': typeof WorkersWorkerIdRoute
   '/projects': typeof ProjectsIndexRoute
+  '/workers': typeof WorkersIndexRoute
   '/projects/$companyId/$section': typeof ProjectsCompanyIdSectionRoute
   '/projects/$companyId': typeof ProjectsCompanyIdIndexRoute
   '/projects/$companyId/cpa/$monthId': typeof ProjectsCompanyIdCpaMonthIdRoute
@@ -135,11 +135,11 @@ export interface FileRoutesById {
   '/payments': typeof PaymentsRoute
   '/projects': typeof ProjectsRouteWithChildren
   '/reports': typeof ReportsRoute
-  '/workers': typeof WorkersRouteWithChildren
   '/clients/$clientId': typeof ClientsClientIdRoute
   '/projects/$companyId': typeof ProjectsCompanyIdRouteWithChildren
   '/workers/$workerId': typeof WorkersWorkerIdRoute
   '/projects/': typeof ProjectsIndexRoute
+  '/workers/': typeof WorkersIndexRoute
   '/projects/$companyId/$section': typeof ProjectsCompanyIdSectionRoute
   '/projects/$companyId/': typeof ProjectsCompanyIdIndexRoute
   '/projects/$companyId/cpa/$monthId': typeof ProjectsCompanyIdCpaMonthIdRoute
@@ -153,11 +153,11 @@ export interface FileRouteTypes {
     | '/payments'
     | '/projects'
     | '/reports'
-    | '/workers'
     | '/clients/$clientId'
     | '/projects/$companyId'
     | '/workers/$workerId'
     | '/projects/'
+    | '/workers/'
     | '/projects/$companyId/$section'
     | '/projects/$companyId/'
     | '/projects/$companyId/cpa/$monthId'
@@ -168,10 +168,10 @@ export interface FileRouteTypes {
     | '/login'
     | '/payments'
     | '/reports'
-    | '/workers'
     | '/clients/$clientId'
     | '/workers/$workerId'
     | '/projects'
+    | '/workers'
     | '/projects/$companyId/$section'
     | '/projects/$companyId'
     | '/projects/$companyId/cpa/$monthId'
@@ -183,11 +183,11 @@ export interface FileRouteTypes {
     | '/payments'
     | '/projects'
     | '/reports'
-    | '/workers'
     | '/clients/$clientId'
     | '/projects/$companyId'
     | '/workers/$workerId'
     | '/projects/'
+    | '/workers/'
     | '/projects/$companyId/$section'
     | '/projects/$companyId/'
     | '/projects/$companyId/cpa/$monthId'
@@ -200,18 +200,11 @@ export interface RootRouteChildren {
   PaymentsRoute: typeof PaymentsRoute
   ProjectsRoute: typeof ProjectsRouteWithChildren
   ReportsRoute: typeof ReportsRoute
-  WorkersRoute: typeof WorkersRouteWithChildren
+  WorkersIndexRoute: typeof WorkersIndexRoute
 }
 
 declare module '@tanstack/react-router' {
   interface FileRoutesByPath {
-    '/workers': {
-      id: '/workers'
-      path: '/workers'
-      fullPath: '/workers'
-      preLoaderRoute: typeof WorkersRouteImport
-      parentRoute: typeof rootRouteImport
-    }
     '/reports': {
       id: '/reports'
       path: '/reports'
@@ -252,6 +245,13 @@ declare module '@tanstack/react-router' {
       path: '/'
       fullPath: '/'
       preLoaderRoute: typeof IndexRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/workers/': {
+      id: '/workers/'
+      path: '/workers'
+      fullPath: '/workers/'
+      preLoaderRoute: typeof WorkersIndexRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/projects/': {
@@ -346,17 +346,6 @@ const ProjectsRouteWithChildren = ProjectsRoute._addFileChildren(
   ProjectsRouteChildren,
 )
 
-interface WorkersRouteChildren {
-  WorkersWorkerIdRoute: typeof WorkersWorkerIdRoute
-}
-
-const WorkersRouteChildren: WorkersRouteChildren = {
-  WorkersWorkerIdRoute: WorkersWorkerIdRoute,
-}
-
-const WorkersRouteWithChildren =
-  WorkersRoute._addFileChildren(WorkersRouteChildren)
-
 const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
   ClientsRoute: ClientsRouteWithChildren,
@@ -364,8 +353,17 @@ const rootRouteChildren: RootRouteChildren = {
   PaymentsRoute: PaymentsRoute,
   ProjectsRoute: ProjectsRouteWithChildren,
   ReportsRoute: ReportsRoute,
-  WorkersRoute: WorkersRouteWithChildren,
+  WorkersIndexRoute: WorkersIndexRoute,
 }
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)
   ._addFileTypes<FileRouteTypes>()
+
+import type { getRouter } from './router.tsx'
+import type { createStart } from '@tanstack/react-start'
+declare module '@tanstack/react-start' {
+  interface Register {
+    ssr: true
+    router: Awaited<ReturnType<typeof getRouter>>
+  }
+}

@@ -15,7 +15,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { uploadFile, openFile } from "@/lib/storage";
 import { toast } from "sonner";
 
-export const Route = createFileRoute("/workers")({ component: () => <AppLayout><WorkersPage /></AppLayout> });
+export const Route = createFileRoute("/workers/")({ component: () => <AppLayout><WorkersPage /></AppLayout> });
 
 type Worker = {
   id: string;
@@ -221,7 +221,6 @@ function WorkersPage() {
           </TableBody>
         </Table>
       </div>
-
       <Dialog open={open} onOpenChange={setOpen}>
         <DialogContent className="max-w-3xl max-h-[90vh] overflow-y-auto">
           <DialogHeader><DialogTitle>{editing?.id ? t("edit") : t("add")} — {t("workers")}</DialogTitle></DialogHeader>
@@ -301,7 +300,7 @@ function WorkersPage() {
         </DialogContent>
       </Dialog>
     </div>
-  );
+  )
 }
 
 function Field({ label, children, className }: { label: string; children: React.ReactNode; className?: string }) {
