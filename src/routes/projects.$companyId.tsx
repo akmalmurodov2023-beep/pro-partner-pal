@@ -263,7 +263,7 @@ function DocsTab({ clientId, kind }: { clientId: string; kind: "contract" | "inv
   useEffect(() => { load(); }, [clientId]);
 
   const save = async () => {
-    const payload = { client_id: clientId, project_name: editing.project_name || null, [field]: editing[field] || null, status: editing.status || "active" };
+    const payload: any = { client_id: clientId, project_name: editing.project_name || null, [field]: editing[field] || null, status: editing.status || "active" };
     const r = editing.id ? await supabase.from("projects").update(payload).eq("id", editing.id) : await supabase.from("projects").insert(payload);
     if (r.error) return toast.error(r.error.message);
     toast.success(t("saved")); setOpen(false); load();
