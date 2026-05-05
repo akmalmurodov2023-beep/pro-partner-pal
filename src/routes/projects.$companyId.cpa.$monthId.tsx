@@ -179,13 +179,14 @@ function MonthDetailPage() {
           <Table>
             <TableHeader>
               <TableRow>
-                <TableHead>#</TableHead>
-                <TableHead>{t("bloggers")}</TableHead>
-                <TableHead>{t("promocode")}</TableHead>
-                <TableHead>{t("results")}</TableHead>
-                <TableHead className="text-right">{t("amount")}</TableHead>
-                <TableHead className="text-right">{t("paid")}</TableHead>
-                <TableHead className="text-center">{t("status")}</TableHead>
+                <TableHead className="px-4 py-3">#</TableHead>
+                <TableHead className="px-4 py-3">{t("bloggers")}</TableHead>
+                <TableHead className="px-4 py-3">{t("promocode")}</TableHead>
+                <TableHead className="px-4 py-3">{t("results")}</TableHead>
+                <TableHead className="px-4 py-3 text-right">{t("amount")}</TableHead>
+                <TableHead className="px-4 py-3 text-right">{t("paid")}</TableHead>
+                <TableHead className="px-4 py-3 text-center">{t("status")}</TableHead>
+                <TableHead className="px-4 py-3 text-right">{t("actions")}</TableHead>
               </TableRow>
             </TableHeader>
             <TableBody>
@@ -197,19 +198,19 @@ function MonthDetailPage() {
                 const ok = b.paid_status === "paid";
                 return (
                   <TableRow key={i} className="cursor-pointer" onDoubleClick={() => openEdit(i)}>
-                    <TableCell>{i + 1}</TableCell>
-                    <TableCell className="font-medium">{b.worker || "—"}</TableCell>
-                    <TableCell>
+                    <TableCell className="px-4 py-3">{i + 1}</TableCell>
+                    <TableCell className="px-4 py-3 font-medium">{b.worker || "—"}</TableCell>
+                    <TableCell className="px-4 py-3">
                       {b.promo_code ? (
                         <span className="inline-flex items-center rounded-full border border-primary/30 bg-primary/10 text-primary px-3 py-1 text-xs font-medium">
                           {b.promo_code}
                         </span>
                       ) : "—"}
                     </TableCell>
-                    <TableCell>{b.results || "—"}</TableCell>
-                    <TableCell className="text-right">{fmt(expected)}</TableCell>
-                    <TableCell className="text-right">{fmt(paid)}</TableCell>
-                    <TableCell className="text-center">
+                    <TableCell className="px-4 py-3">{b.results || "—"}</TableCell>
+                    <TableCell className="px-4 py-3 text-right">{fmt(expected)}</TableCell>
+                    <TableCell className="px-4 py-3 text-right">{fmt(paid)}</TableCell>
+                    <TableCell className="px-4 py-3 text-center">
                       {ok ? (
                         <span className="inline-flex items-center justify-center h-6 w-6 bg-green-500/15 text-green-600">
                           <Check className="h-4 w-4" />
@@ -220,7 +221,7 @@ function MonthDetailPage() {
                         </span>
                       )}
                     </TableCell>
-                    <TableCell className="text-right">
+                    <TableCell className="px-4 py-3 text-right">
                       <Button size="icon" variant="ghost" onClick={(e) => { e.stopPropagation(); removeRow(i); }}>
                         <Trash2 className="h-4 w-4 text-destructive" />
                       </Button>
