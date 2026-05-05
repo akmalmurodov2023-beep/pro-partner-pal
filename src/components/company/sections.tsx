@@ -124,8 +124,8 @@ export function CpaTab({ clientId }: { clientId: string }) {
                             <TableCell>
                               <Button size="sm" variant="outline" onClick={(e) => { e.stopPropagation(); openDetails(m); }}>{count}</Button>
                             </TableCell>
-                            <TableCell className="text-right">
-                              <Button size="sm" variant="outline" onClick={(e) => { e.stopPropagation(); openDetails(m); }}>
+                            <TableCell className="text-right pr-6">
+                              <Button size="sm" variant="outline" className="rounded-none" onClick={(e) => { e.stopPropagation(); openDetails(m); }}>
                                 <FileText className="h-3 w-3 mr-1" />{t("results_btn")}
                               </Button>
                             </TableCell>
