@@ -191,6 +191,8 @@ function WorkersPage() {
       const file = new File([blob], "avatar.jpg", { type: "image/jpeg" });
       const path = await uploadFile("workers/avatar", file);
       setEditing({ ...editing, avatar_url: path } as any);
+      const u = await getSignedUrls([path]);
+      setAvatarUrls((prev) => ({ ...prev, ...u }));
       setCropFile(null);
       toast.success(t("saved"));
     } catch (err: any) { toast.error(err.message); }
