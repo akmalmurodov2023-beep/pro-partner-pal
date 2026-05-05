@@ -217,51 +217,66 @@ export type Database = {
       }
       workers: {
         Row: {
+          birth_date: string | null
           created_at: string
           e_signature_file_url: string | null
           e_signature_key: string | null
           e_signature_password: string | null
           full_name: string
           id: string
+          passport_back_url: string | null
+          passport_front_url: string | null
+          passport_number: string | null
           passport_series_number: string | null
           phone_number: string | null
           plastic_card_info: string | null
           position: string | null
           residence_address: string | null
+          residence_file_url: string | null
           social_media_assets: Json | null
           telegram_username: string | null
           temp_living_addresses: string[] | null
           updated_at: string
         }
         Insert: {
+          birth_date?: string | null
           created_at?: string
           e_signature_file_url?: string | null
           e_signature_key?: string | null
           e_signature_password?: string | null
           full_name: string
           id?: string
+          passport_back_url?: string | null
+          passport_front_url?: string | null
+          passport_number?: string | null
           passport_series_number?: string | null
           phone_number?: string | null
           plastic_card_info?: string | null
           position?: string | null
           residence_address?: string | null
+          residence_file_url?: string | null
           social_media_assets?: Json | null
           telegram_username?: string | null
           temp_living_addresses?: string[] | null
           updated_at?: string
         }
         Update: {
+          birth_date?: string | null
           created_at?: string
           e_signature_file_url?: string | null
           e_signature_key?: string | null
           e_signature_password?: string | null
           full_name?: string
           id?: string
+          passport_back_url?: string | null
+          passport_front_url?: string | null
+          passport_number?: string | null
           passport_series_number?: string | null
           phone_number?: string | null
           plastic_card_info?: string | null
           position?: string | null
           residence_address?: string | null
+          residence_file_url?: string | null
           social_media_assets?: Json | null
           telegram_username?: string | null
           temp_living_addresses?: string[] | null
