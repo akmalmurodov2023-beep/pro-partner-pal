@@ -1,4 +1,4 @@
-import { createFileRoute, Link } from "@tanstack/react-router";
+import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
 import { useEffect, useRef, useState } from "react";
 import { useTranslation } from "react-i18next";
 import { AppLayout } from "@/components/AppLayout";
@@ -19,6 +19,7 @@ type Client = { id: string; company_name: string; inn: string | null; bank_accou
 
 function ClientsPage() {
   const { t } = useTranslation();
+  const navigate = useNavigate();
   const [rows, setRows] = useState<Client[]>([]);
   const [search, setSearch] = useState("");
   const [open, setOpen] = useState(false);
@@ -114,7 +115,7 @@ function ClientsPage() {
           <TableBody>
             {filtered.length === 0 && <TableRow><TableCell colSpan={5} className="text-center text-muted-foreground py-8">{t("no_data")}</TableCell></TableRow>}
             {filtered.map(c => (
-              <TableRow key={c.id}>
+              <TableRow key={c.id} className="cursor-pointer" onClick={() => navigate({ to: "/clients/$clientId", params: { clientId: c.id } })}>
                 <TableCell>
                   {logoUrls[c.id] ? <img src={logoUrls[c.id]} alt={c.company_name} className="h-10 w-10 rounded object-cover" /> : <div className="h-10 w-10 rounded bg-muted flex items-center justify-center"><Building2 className="h-4 w-4 text-muted-foreground" /></div>}
                 </TableCell>
@@ -125,9 +126,9 @@ function ClientsPage() {
                 </TableCell>
                 <TableCell>{c.inn}</TableCell>
                 <TableCell>{c.bank_account}</TableCell>
-                <TableCell className="text-right">
-                  <Button size="icon" variant="ghost" onClick={() => openEdit(c)}><Pencil className="h-4 w-4" /></Button>
-                  <Button size="icon" variant="ghost" onClick={() => del(c.id)}><Trash2 className="h-4 w-4" /></Button>
+                <TableCell className="text-right" onClick={(e) => e.stopPropagation()}>
+                  <Button size="icon" variant="ghost" onClick={(e) => { e.stopPropagation(); openEdit(c); }}><Pencil className="h-4 w-4" /></Button>
+                  <Button size="icon" variant="ghost" onClick={(e) => { e.stopPropagation(); del(c.id); }}><Trash2 className="h-4 w-4" /></Button>
                 </TableCell>
               </TableRow>
             ))}

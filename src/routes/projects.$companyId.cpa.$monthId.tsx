@@ -197,7 +197,7 @@ function MonthDetailPage() {
                 const paid = Number(b.paid_amount || 0) || paidForWorker(b.worker || "");
                 const ok = b.paid_status === "paid";
                 return (
-                  <TableRow key={i} className="cursor-pointer" onDoubleClick={() => openEdit(i)}>
+                  <TableRow key={i} className="cursor-pointer" onClick={() => openEdit(i)}>
                     <TableCell className="px-4 py-3">{i + 1}</TableCell>
                     <TableCell className="px-4 py-3 font-medium">{b.worker || "—"}</TableCell>
                     <TableCell className="px-4 py-3">

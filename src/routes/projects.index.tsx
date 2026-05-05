@@ -1,4 +1,4 @@
-import { createFileRoute, Link } from "@tanstack/react-router";
+import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
 import { useEffect, useState } from "react";
 import { useTranslation } from "react-i18next";
 import { AppLayout } from "@/components/AppLayout";
@@ -16,6 +16,7 @@ type Client = { id: string; company_name: string; inn: string | null; bank_accou
 
 function ProjectsPage() {
   const { t } = useTranslation();
+  const navigate = useNavigate();
   const [rows, setRows] = useState<Client[]>([]);
   const [logos, setLogos] = useState<Record<string, string>>({});
   const [search, setSearch] = useState("");
@@ -64,7 +65,7 @@ function ProjectsPage() {
               <TableRow><TableCell colSpan={5} className="text-center text-muted-foreground py-8">{t("no_data")}</TableCell></TableRow>
             )}
             {filtered.map(c => (
-              <TableRow key={c.id} className="hover:bg-muted/50">
+              <TableRow key={c.id} className="cursor-pointer hover:bg-muted/50" onClick={() => navigate({ to: "/projects/$companyId", params: { companyId: c.id } })}>
                 <TableCell>
                   {logos[c.id]
                     ? <img src={logos[c.id]} alt={c.company_name} className="h-10 w-10 rounded object-cover" />

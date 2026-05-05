@@ -202,7 +202,7 @@ function WorkersPage() {
               <TableRow><TableCell colSpan={6} className="text-center text-muted-foreground py-8">{t("no_data")}</TableCell></TableRow>
             )}
             {filtered.map(w => (
-              <TableRow key={w.id} className="cursor-pointer" onDoubleClick={() => navigate({ to: "/workers/$workerId", params: { workerId: w.id } })}>
+              <TableRow key={w.id} className="cursor-pointer" onClick={() => navigate({ to: "/workers/$workerId", params: { workerId: w.id } })}>
                 <TableCell className="font-medium">{w.full_name}</TableCell>
                 <TableCell>{w.position}</TableCell>
                 <TableCell>{w.phone_number}</TableCell>
@@ -212,7 +212,7 @@ function WorkersPage() {
                     {workerPromos(w.id).map(p => <Badge key={p.id} variant="secondary"><Tag className="h-3 w-3 mr-1" />{p.code}</Badge>)}
                   </div>
                 </TableCell>
-                <TableCell className="text-right" onDoubleClick={(e) => e.stopPropagation()}>
+                <TableCell className="text-right" onClick={(e) => e.stopPropagation()}>
                   <Button size="icon" variant="ghost" onClick={(e) => { e.stopPropagation(); openEdit(w); }}><Pencil className="h-4 w-4" /></Button>
                   <Button size="icon" variant="ghost" onClick={(e) => { e.stopPropagation(); del(w.id); }}><Trash2 className="h-4 w-4" /></Button>
                 </TableCell>

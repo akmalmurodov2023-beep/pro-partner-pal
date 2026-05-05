@@ -118,7 +118,7 @@ export function CpaTab({ clientId }: { clientId: string }) {
                       {yearMonths.map(m => {
                         const count = Array.isArray(m.results_table_data) ? m.results_table_data.length : 0;
                         return (
-                          <TableRow key={m.id} onDoubleClick={() => openDetails(m)} className="cursor-pointer">
+                          <TableRow key={m.id} onClick={() => openDetails(m)} className="cursor-pointer">
                             <TableCell className="font-medium">{MONTHS[m.month - 1]} {m.year}</TableCell>
                             <TableCell className="text-muted-foreground">{monthRange(m.year, m.month)}</TableCell>
                             <TableCell>
