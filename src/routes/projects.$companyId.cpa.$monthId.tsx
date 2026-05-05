@@ -50,10 +50,12 @@ function MonthDetailPage() {
       const end = `${m.year}-${pad(m.month)}-${pad(last)}`;
       const [p, w] = await Promise.all([
         supabase.from("payments").select("*").eq("client_id", companyId).gte("payment_date", start).lte("payment_date", end),
-        supabase.from("project_workers").select("worker_id, workers(id, full_name)").eq("client_id", companyId),
+        supabase.from("project_workers").select("worker_id, promo_code, workers(id, full_name)").eq("client_id", companyId),
       ]);
       setPayments(p.data || []);
-      setWorkers((w.data || []).map((r: any) => r.workers).filter(Boolean));
+      setWorkers((w.data || [])
+        .filter((r: any) => r.workers)
+        .map((r: any) => ({ ...r.workers, promo_code: r.promo_code })));
       setLoading(false);
     })();
   }, [monthId, companyId]);
@@ -315,7 +317,14 @@ function MonthDetailPage() {
           <div className="space-y-3">
             <div>
               <Label>{t("bloggers")}</Label>
-              <Select value={form.worker_id} onValueChange={(v) => setForm({ ...form, worker_id: v })}>
+              <Select value={form.worker_id} onValueChange={(v) => {
+                const w = workers.find(x => x.id === v);
+                setForm((f: any) => ({
+                  ...f,
+                  worker_id: v,
+                  promo_code: f.promo_code || w?.promo_code || "",
+                }));
+              }}>
                 <SelectTrigger><SelectValue placeholder={t("select_blogger")} /></SelectTrigger>
                 <SelectContent>
                   {workers.map(w => <SelectItem key={w.id} value={w.id}>{w.full_name}</SelectItem>)}

@@ -29,7 +29,7 @@ export function ProjectWorkersTab({ clientId }: { clientId: string }) {
   const load = async () => {
     const { data: links } = await supabase
       .from("project_workers")
-      .select("id, worker_id, created_at")
+      .select("id, worker_id, promo_code, created_at")
       .eq("client_id", clientId)
       .order("created_at", { ascending: false });
     const { data: workers } = await supabase
@@ -43,16 +43,19 @@ export function ProjectWorkersTab({ clientId }: { clientId: string }) {
   const linkedIds = new Set(linked.map(l => l.worker_id));
   const available = allWorkers.filter(w => !linkedIds.has(w.id));
 
+  const [promoCode, setPromoCode] = useState("");
+
   const add = async () => {
     if (!selectedId) return;
     const { error } = await supabase
       .from("project_workers")
-      .insert({ client_id: clientId, worker_id: selectedId });
+      .insert({ client_id: clientId, worker_id: selectedId, promo_code: promoCode || null });
     if (error) return toast.error(error.message);
-    notifyAddedToProject(selectedId, clientId).catch(() => {});
+    notifyAddedToProject(selectedId, clientId, promoCode || null).catch(() => {});
     toast.success(t("saved"));
     setOpen(false);
     setSelectedId("");
+    setPromoCode("");
     load();
   };
 
@@ -70,6 +73,15 @@ export function ProjectWorkersTab({ clientId }: { clientId: string }) {
 
   const nameOf = (id: string) => allWorkers.find(w => w.id === id)?.full_name || "—";
 
+  const updatePromo = async (linkId: string, code: string) => {
+    const { error } = await supabase
+      .from("project_workers")
+      .update({ promo_code: code || null })
+      .eq("id", linkId);
+    if (error) return toast.error(error.message);
+    setLinked(prev => prev.map(l => l.id === linkId ? { ...l, promo_code: code } : l));
+  };
+
   return (
     <div>
       <div className="flex justify-end mb-3">
@@ -83,18 +95,30 @@ export function ProjectWorkersTab({ clientId }: { clientId: string }) {
             <TableRow>
               <TableHead>{t("worker")}</TableHead>
               <TableHead>Telegram</TableHead>
+              <TableHead>{t("promocode")}</TableHead>
               <TableHead className="text-right">{t("actions")}</TableHead>
             </TableRow>
           </TableHeader>
           <TableBody>
             {linked.length === 0 ? (
-              <TableRow><TableCell colSpan={3} className="text-center text-muted-foreground py-6">{t("no_data")}</TableCell></TableRow>
+              <TableRow><TableCell colSpan={4} className="text-center text-muted-foreground py-6">{t("no_data")}</TableCell></TableRow>
             ) : linked.map(l => {
               const w = allWorkers.find(x => x.id === l.worker_id);
               return (
                 <TableRow key={l.id}>
                   <TableCell className="font-medium">{nameOf(l.worker_id)}</TableCell>
                   <TableCell className="text-muted-foreground">{w?.telegram_id || "—"}</TableCell>
+                  <TableCell>
+                    <Input
+                      defaultValue={l.promo_code || ""}
+                      placeholder="—"
+                      className="h-8 max-w-[180px]"
+                      onBlur={(e) => {
+                        const v = e.target.value.trim();
+                        if (v !== (l.promo_code || "")) updatePromo(l.id, v);
+                      }}
+                    />
+                  </TableCell>
                   <TableCell className="text-right">
                     <Button size="icon" variant="ghost" onClick={() => remove(l)}>
                       <Trash2 className="h-4 w-4 text-destructive" />
@@ -123,6 +147,10 @@ export function ProjectWorkersTab({ clientId }: { clientId: string }) {
                   ))}
                 </SelectContent>
               </Select>
+            </div>
+            <div>
+              <Label>{t("promocode")}</Label>
+              <Input value={promoCode} onChange={(e) => setPromoCode(e.target.value)} />
             </div>
           </div>
           <DialogFooter>

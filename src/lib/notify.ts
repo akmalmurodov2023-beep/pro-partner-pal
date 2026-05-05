@@ -83,11 +83,12 @@ export async function notifyPaymentConfirmed(opts: {
   await sendTelegramMessage({ data: { chat_id: w.telegram_id, text } });
 }
 
-export async function notifyAddedToProject(workerId: string, clientId: string) {
+export async function notifyAddedToProject(workerId: string, clientId: string, promoCode?: string | null) {
   const projectName = await getClientName(clientId);
+  const promoLine = promoCode ? `\n\n🎫 Promokod: <b>${promoCode}</b>` : "";
   await send(
     workerId,
-    `✅  <b>Tabriklaymiz</b>, Siz <b>${projectName}</b> loyihasiga muvafaqqiyatli qo'shildingiz!`,
+    `✅  <b>Tabriklaymiz</b>, Siz <b>${projectName}</b> loyihasiga muvafaqqiyatli qo'shildingiz!${promoLine}`,
   );
 }
 

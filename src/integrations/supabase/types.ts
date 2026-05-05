@@ -156,18 +156,21 @@ export type Database = {
           client_id: string
           created_at: string
           id: string
+          promo_code: string | null
           worker_id: string
         }
         Insert: {
           client_id: string
           created_at?: string
           id?: string
+          promo_code?: string | null
           worker_id: string
         }
         Update: {
           client_id?: string
           created_at?: string
           id?: string
+          promo_code?: string | null
           worker_id?: string
         }
         Relationships: []
