@@ -23,6 +23,9 @@ export function CpaTab({ clientId }: { clientId: string }) {
   const [open, setOpen] = useState(false);
   const [editing, setEditing] = useState<any>(null);
   const [resultsJson, setResultsJson] = useState("");
+  const [bloggersOpen, setBloggersOpen] = useState(false);
+  const [bloggersList, setBloggersList] = useState<any[]>([]);
+  const [bloggersTitle, setBloggersTitle] = useState("");
 
   const load = async () => {
     const { data } = await supabase.from("monthly_results").select("*").eq("client_id", clientId).order("year", { ascending: false }).order("month", { ascending: false });
@@ -52,6 +55,18 @@ export function CpaTab({ clientId }: { clientId: string }) {
 
   const sorted = [...results].sort((a, b) => b.year - a.year || b.month - a.month);
 
+  const pad = (n: number) => String(n).padStart(2, "0");
+  const monthRange = (year: number, month: number) => {
+    const last = new Date(year, month, 0).getDate();
+    return `${pad(1)}.${pad(month)}.${year} - ${pad(last)}.${pad(month)}.${year}`;
+  };
+  const showBloggers = (m: any) => {
+    const rows = Array.isArray(m.results_table_data) ? m.results_table_data : [];
+    setBloggersList(rows);
+    setBloggersTitle(`${MONTHS[m.month - 1]} ${m.year}`);
+    setBloggersOpen(true);
+  };
+
   return (
     <div>
       <div className="flex justify-end mb-3">
@@ -60,19 +75,36 @@ export function CpaTab({ clientId }: { clientId: string }) {
       {sorted.length === 0 ? (
         <div className="text-muted-foreground text-sm">{t("no_data")}</div>
       ) : (
-        <div className="space-y-2">
-          {sorted.map(m => (
-            <Card key={m.id} className="cursor-pointer hover:border-primary transition-colors" onClick={() => editMonth(m)}>
-              <CardContent className="py-3 flex items-center gap-3">
-                <div className="flex-1">
-                  <div className="font-semibold">{MONTHS[m.month - 1]} {m.year}</div>
-                  <div className="text-xs text-muted-foreground">
-                    {Array.isArray(m.results_table_data) ? m.results_table_data.length : 0} rows · {(m.uploaded_docs_urls || []).length} files
-                  </div>
-                </div>
-              </CardContent>
-            </Card>
-          ))}
+        <div className="border rounded-lg bg-card overflow-x-auto">
+          <Table>
+            <TableHeader>
+              <TableRow>
+                <TableHead>{t("month")}</TableHead>
+                <TableHead>{t("period")}</TableHead>
+                <TableHead>{t("attendance")}</TableHead>
+                <TableHead className="text-right">{t("results")}</TableHead>
+              </TableRow>
+            </TableHeader>
+            <TableBody>
+              {sorted.map(m => {
+                const count = Array.isArray(m.results_table_data) ? m.results_table_data.length : 0;
+                return (
+                  <TableRow key={m.id}>
+                    <TableCell className="font-medium">{MONTHS[m.month - 1]} {m.year}</TableCell>
+                    <TableCell className="text-muted-foreground">{monthRange(m.year, m.month)}</TableCell>
+                    <TableCell>
+                      <Button size="sm" variant="outline" onClick={() => showBloggers(m)}>{count}</Button>
+                    </TableCell>
+                    <TableCell className="text-right">
+                      <Button size="sm" variant="outline" onClick={() => editMonth(m)}>
+                        <FileText className="h-3 w-3 mr-1" />{t("results_btn")}
+                      </Button>
+                    </TableCell>
+                  </TableRow>
+                );
+              })}
+            </TableBody>
+          </Table>
         </div>
       )}
 
@@ -97,6 +129,39 @@ export function CpaTab({ clientId }: { clientId: string }) {
             </div>
           )}
           <DialogFooter><Button variant="outline" onClick={() => setOpen(false)}>{t("cancel")}</Button><Button onClick={save}>{t("save")}</Button></DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      <Dialog open={bloggersOpen} onOpenChange={setBloggersOpen}>
+        <DialogContent className="max-w-2xl">
+          <DialogHeader><DialogTitle>{t("bloggers")} — {bloggersTitle}</DialogTitle></DialogHeader>
+          <div className="border rounded-lg overflow-x-auto">
+            <Table>
+              <TableHeader>
+                <TableRow>
+                  <TableHead>#</TableHead>
+                  <TableHead>{t("worker")}</TableHead>
+                  <TableHead>{t("promocode")}</TableHead>
+                  <TableHead>{t("results")}</TableHead>
+                  <TableHead className="text-right">{t("amount")}</TableHead>
+                </TableRow>
+              </TableHeader>
+              <TableBody>
+                {bloggersList.length === 0 && (
+                  <TableRow><TableCell colSpan={5} className="text-center text-muted-foreground py-6">{t("no_data")}</TableCell></TableRow>
+                )}
+                {bloggersList.map((b: any, i: number) => (
+                  <TableRow key={i}>
+                    <TableCell>{i + 1}</TableCell>
+                    <TableCell>{b.worker || "—"}</TableCell>
+                    <TableCell>{b.promo_code || "—"}</TableCell>
+                    <TableCell>{b.results || "—"}</TableCell>
+                    <TableCell className="text-right">{Number(b.salary || 0).toLocaleString()}</TableCell>
+                  </TableRow>
+                ))}
+              </TableBody>
+            </Table>
+          </div>
         </DialogContent>
       </Dialog>
     </div>
