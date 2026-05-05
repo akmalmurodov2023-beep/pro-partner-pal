@@ -6,8 +6,9 @@ import { AppLayout } from "@/components/AppLayout";
 import { PageHeader } from "@/components/PageHeader";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
+import { Avatar, AvatarImage, AvatarFallback } from "@/components/ui/avatar";
 import { supabase } from "@/integrations/supabase/client";
-import { openFile } from "@/lib/storage";
+import { openFile, getSignedUrl } from "@/lib/storage";
 
 export const Route = createFileRoute("/workers/$workerId")({
   component: () => <AppLayout><WorkerProfile /></AppLayout>,
@@ -19,6 +20,7 @@ function WorkerProfile() {
   const [w, setW] = useState<any>(null);
   const [promos, setPromos] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
+  const [avatarUrl, setAvatarUrl] = useState<string>("");
 
   useEffect(() => {
     (async () => {
@@ -29,6 +31,10 @@ function WorkerProfile() {
       ]);
       setW(wr.data);
       setPromos(pr.data || []);
+      if (wr.data?.avatar_url) {
+        const u = await getSignedUrl(wr.data.avatar_url);
+        if (u) setAvatarUrl(u);
+      }
       setLoading(false);
     })();
   }, [workerId]);
@@ -51,7 +57,13 @@ function WorkerProfile() {
       <Link to="/workers" className="inline-flex items-center text-sm text-muted-foreground hover:underline mb-4">
         <ArrowLeft className="h-4 w-4 mr-1" />{t("back")}
       </Link>
-      <PageHeader title={w.full_name} />
+      <div className="flex items-center gap-4">
+        <Avatar className="h-20 w-20">
+          {avatarUrl && <AvatarImage src={avatarUrl} alt={w.full_name} />}
+          <AvatarFallback>{(w.full_name || "?").charAt(0).toUpperCase()}</AvatarFallback>
+        </Avatar>
+        <PageHeader title={w.full_name} />
+      </div>
 
       <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mt-4">
         <Info label={t("full_name")} value={w.full_name} />
