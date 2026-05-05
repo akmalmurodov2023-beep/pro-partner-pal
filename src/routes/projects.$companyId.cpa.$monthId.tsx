@@ -199,7 +199,13 @@ function MonthDetailPage() {
                   <TableRow key={i} className="cursor-pointer" onDoubleClick={() => openEdit(i)}>
                     <TableCell>{i + 1}</TableCell>
                     <TableCell className="font-medium">{b.worker || "—"}</TableCell>
-                    <TableCell>{b.promo_code || "—"}</TableCell>
+                    <TableCell>
+                      {b.promo_code ? (
+                        <span className="inline-flex items-center rounded-full border border-primary/30 bg-primary/10 text-primary px-2.5 py-0.5 text-xs font-medium">
+                          {b.promo_code}
+                        </span>
+                      ) : "—"}
+                    </TableCell>
                     <TableCell>{b.results || "—"}</TableCell>
                     <TableCell className="text-right">{fmt(expected)}</TableCell>
                     <TableCell className="text-right">{fmt(paid)}</TableCell>
