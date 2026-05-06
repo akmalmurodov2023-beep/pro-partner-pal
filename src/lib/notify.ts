@@ -51,6 +51,7 @@ export async function notifyPaymentConfirmed(opts: {
 
   // Compute rank in that month
   let rank: number | string = "—";
+  let resultsCount: number | string = "—";
   const { data: monthRow } = await supabase
     .from("monthly_results")
     .select("results_table_data")
@@ -67,7 +68,10 @@ export async function notifyPaymentConfirmed(opts: {
         String(r.worker || "").trim().toLowerCase() ===
         w.full_name.trim().toLowerCase(),
     );
-    if (idx >= 0) rank = idx + 1;
+    if (idx >= 0) {
+      rank = idx + 1;
+      resultsCount = Number(sorted[idx].results) || 0;
+    }
   }
 
   const time = new Date().toLocaleString("uz-UZ", {
@@ -79,6 +83,7 @@ export async function notifyPaymentConfirmed(opts: {
     `✅ Sizning <b>${projectName}</b> uchun <b>${MONTHS_FULL[opts.month - 1]}</b> oyi to'lovingiz tasdiqlandi.\n\n` +
     `🕔 Vaqt: ${time}\n` +
     `💰 Umumiy miqdor: <b>${fmtNum(opts.amount)}</b> so'm\n` +
+    `📨 Rezultat: <b>${resultsCount}</b> ta\n` +
     `🏁 Reyting: <b>${rank}</b> o'rin`;
   await sendTelegramMessage({ data: { chat_id: w.telegram_id, text } });
 }
