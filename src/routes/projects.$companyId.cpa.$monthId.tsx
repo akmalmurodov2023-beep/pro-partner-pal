@@ -37,6 +37,7 @@ function MonthDetailPage() {
   const [search, setSearch] = useState("");
   const [dlgOpen, setDlgOpen] = useState(false);
   const [editIdx, setEditIdx] = useState<number | null>(null);
+  const [confirmOpen, setConfirmOpen] = useState(false);
   const [form, setForm] = useState<any>({ worker_id: "", promo_code: "", results: "", salary: "", paid_amount: "", paid_status: "unpaid" });
 
   useEffect(() => {
@@ -111,6 +112,14 @@ function MonthDetailPage() {
     toast.success(t("saved"));
   };
 
+  const handleSaveClick = () => {
+    if (!form.worker_id) return toast.error(t("select_blogger"));
+    if (!String(form.promo_code || "").trim()) return toast.error(t("promocode"));
+    if (!String(form.results || "").trim()) return toast.error(t("results"));
+    if (!form.paid_status) return toast.error(t("paid_status"));
+    setConfirmOpen(true);
+  };
+
   const save = async () => {
     const w = workers.find(x => x.id === form.worker_id);
     if (!w) return toast.error(t("select_blogger"));
@@ -127,6 +136,7 @@ function MonthDetailPage() {
     const prev = isNew ? null : rows[editIdx!];
     if (isNew) next.push(entry); else next[editIdx!] = entry;
     await persist(next);
+    setConfirmOpen(false);
     setDlgOpen(false);
     // Triggers
     try {
@@ -365,7 +375,19 @@ function MonthDetailPage() {
           </div>
           <DialogFooter>
             <Button variant="outline" onClick={() => setDlgOpen(false)}>{t("cancel")}</Button>
-            <Button onClick={save}>{t("save")}</Button>
+            <Button onClick={handleSaveClick}>{t("save")}</Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      <Dialog open={confirmOpen} onOpenChange={setConfirmOpen}>
+        <DialogContent className="max-w-sm">
+          <DialogHeader>
+            <DialogTitle>{t("confirm_add_result") || "Rostan ham qo'shasizmi bu natijalarni?"}</DialogTitle>
+          </DialogHeader>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setConfirmOpen(false)}>{t("no") || "Yo'q"}</Button>
+            <Button onClick={save}>{t("yes") || "Ha"}</Button>
           </DialogFooter>
         </DialogContent>
       </Dialog>
