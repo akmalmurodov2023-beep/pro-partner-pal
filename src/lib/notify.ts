@@ -1,5 +1,16 @@
-import { sendTelegramMessage } from "@/server/telegram.functions";
 import { supabase } from "@/integrations/supabase/client";
+
+async function sendTelegramMessage(payload: { chat_id: string; text: string }) {
+  const { data, error } = await supabase.functions.invoke(
+    "send-telegram-notification",
+    { body: payload },
+  );
+  if (error) {
+    console.error("send-telegram-notification failed", error);
+    return { ok: false, error: error.message };
+  }
+  return data;
+}
 
 export const MONTHS_FULL = [
   "Yanvar", "Fevral", "Mart", "Aprel", "May", "Iyun",
@@ -32,7 +43,7 @@ async function send(workerId: string | null | undefined, text: string) {
   const w = await getWorker(workerId);
   if (!w?.telegram_id) return;
   try {
-    await sendTelegramMessage({ data: { chat_id: w.telegram_id, text } });
+    await sendTelegramMessage({ chat_id: w.telegram_id, text });
   } catch (e) {
     console.error("notify failed", e);
   }
@@ -85,7 +96,7 @@ export async function notifyPaymentConfirmed(opts: {
     `💰 Umumiy miqdor: <b>${fmtNum(opts.amount)}</b> so'm\n` +
     `📨 Rezultat: <b>${resultsCount}</b> ta\n` +
     `🏁 Reyting: <b>${rank}</b> o'rin`;
-  await sendTelegramMessage({ data: { chat_id: w.telegram_id, text } });
+  await sendTelegramMessage({ chat_id: w.telegram_id, text });
 }
 
 export async function notifyAddedToProject(workerId: string, clientId: string, promoCode?: string | null) {
