@@ -1,0 +1,1 @@
+ALTER TABLE public.clients ADD COLUMN IF NOT EXISTS telegram_drive_urls text[] NOT NULL DEFAULT '{}'::text[];
