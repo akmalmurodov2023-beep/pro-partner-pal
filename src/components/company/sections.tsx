@@ -15,6 +15,7 @@ import { uploadFile, openFile, getSignedUrl } from "@/lib/storage";
 import { toast } from "sonner";
 import JSZip from "jszip";
 import { notifyAddedToProject, notifyRemovedFromProject } from "@/lib/notify";
+import { uploadToDrive } from "@/server/gdrive.functions";
 
 export const MONTHS = ["Yan", "Fev", "Mart", "Apr", "May", "Iyun", "Iyul", "Avg", "Sen", "Okt", "Noy", "Dek"];
 
@@ -488,7 +489,9 @@ export function TelegramTab({ clientId }: { clientId: string }) {
 
   const link = client?.telegram_archive_link;
   const zips: string[] = client?.telegram_archive_zips || [];
+  const driveUrls: string[] = client?.telegram_drive_urls || [];
   const [uploading, setUploading] = useState(false);
+  const [uploadingDrive, setUploadingDrive] = useState(false);
   const [viewing, setViewing] = useState<string | null>(null);
   const [archiveHtml, setArchiveHtml] = useState<string | null>(null);
   const [archiveFiles, setArchiveFiles] = useState<{ name: string; blobUrl: string }[]>([]);
@@ -508,6 +511,42 @@ export function TelegramTab({ clientId }: { clientId: string }) {
       await reload();
     } catch (err: any) { toast.error(err.message); }
     finally { setUploading(false); e.target.value = ""; }
+  };
+
+  const onUploadDrive = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    setUploadingDrive(true);
+    try {
+      const buf = await file.arrayBuffer();
+      let binary = "";
+      const bytes = new Uint8Array(buf);
+      const chunk = 0x8000;
+      for (let i = 0; i < bytes.length; i += chunk) {
+        binary += String.fromCharCode.apply(null, Array.from(bytes.subarray(i, i + chunk)) as any);
+      }
+      const base64 = btoa(binary);
+      const res = await uploadToDrive({
+        data: { fileName: file.name, mimeType: file.type || "application/octet-stream", base64 },
+      });
+      const next = [...driveUrls, res.webViewLink];
+      const { error } = await supabase.from("clients").update({ telegram_drive_urls: next as any }).eq("id", clientId);
+      if (error) throw error;
+      toast.success("Google Drive'ga yuklandi");
+      await reload();
+    } catch (err: any) {
+      toast.error(err.message || "Drive upload failed");
+    } finally {
+      setUploadingDrive(false);
+      e.target.value = "";
+    }
+  };
+
+  const removeDriveUrl = async (url: string) => {
+    if (!confirm(t("confirm_delete"))) return;
+    const next = driveUrls.filter(u => u !== url);
+    await supabase.from("clients").update({ telegram_drive_urls: next as any }).eq("id", clientId);
+    await reload();
   };
 
   const removeZip = async (path: string) => {
@@ -607,6 +646,30 @@ export function TelegramTab({ clientId }: { clientId: string }) {
                     </div>
                   );
                 })}
+              </div>
+            )}
+          </div>
+          <div>
+            <div className="flex items-center justify-between mb-2">
+              <Label className="text-xs text-muted-foreground">Google Drive arxivlari</Label>
+              <label className="inline-flex items-center gap-2 cursor-pointer text-sm border rounded px-3 py-1.5 hover:bg-muted">
+                {uploadingDrive ? <Loader2 className="h-4 w-4 animate-spin" /> : <Upload className="h-4 w-4" />}
+                Drive'ga yuklash
+                <input type="file" className="hidden" onChange={onUploadDrive} disabled={uploadingDrive} />
+              </label>
+            </div>
+            {driveUrls.length === 0 ? (
+              <div className="text-muted-foreground text-sm">{t("no_data")}</div>
+            ) : (
+              <div className="space-y-2">
+                {driveUrls.map((u, i) => (
+                  <div key={u} className="flex items-center gap-2 border rounded px-3 py-2">
+                    <FileArchive className="h-4 w-4 text-muted-foreground" />
+                    <a href={u} target="_blank" rel="noreferrer" className="flex-1 truncate text-sm text-primary hover:underline">Drive arxiv #{i + 1}</a>
+                    <Button size="sm" variant="outline" onClick={() => window.open(u, "_blank")}><ExternalLink className="h-3 w-3" /></Button>
+                    <Button size="sm" variant="ghost" onClick={() => removeDriveUrl(u)}><Trash2 className="h-3 w-3 text-destructive" /></Button>
+                  </div>
+                ))}
               </div>
             )}
           </div>

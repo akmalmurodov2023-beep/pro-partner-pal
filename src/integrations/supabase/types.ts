@@ -24,6 +24,7 @@ export type Database = {
           logo_url: string | null
           telegram_archive_link: string | null
           telegram_archive_zips: string[]
+          telegram_drive_urls: string[]
           updated_at: string
         }
         Insert: {
@@ -35,6 +36,7 @@ export type Database = {
           logo_url?: string | null
           telegram_archive_link?: string | null
           telegram_archive_zips?: string[]
+          telegram_drive_urls?: string[]
           updated_at?: string
         }
         Update: {
@@ -46,6 +48,7 @@ export type Database = {
           logo_url?: string | null
           telegram_archive_link?: string | null
           telegram_archive_zips?: string[]
+          telegram_drive_urls?: string[]
           updated_at?: string
         }
         Relationships: []
