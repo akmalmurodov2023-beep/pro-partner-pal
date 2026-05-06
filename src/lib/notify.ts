@@ -70,7 +70,7 @@ export async function notifyPaymentConfirmed(opts: {
     );
     if (idx >= 0) {
       rank = idx + 1;
-      resultsCount = Number(sorted[idx].results) || 0;
+      resultsCount = Number((sorted[idx] as any)?.results) || 0;
     }
   }
 
