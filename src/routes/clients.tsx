@@ -12,6 +12,7 @@ import { Plus, Pencil, Trash2, ArrowRight, Upload, Building2 } from "lucide-reac
 import { supabase } from "@/integrations/supabase/client";
 import { uploadFile, getSignedUrl, getSignedUrls } from "@/lib/storage";
 import { toast } from "sonner";
+import { ContextMenu, ContextMenuTrigger, ContextMenuContent, ContextMenuItem } from "@/components/ui/context-menu";
 
 export const Route = createFileRoute("/clients")({ component: () => <AppLayout><ClientsPage /></AppLayout> });
 
@@ -72,6 +73,18 @@ function ClientsPage() {
     toast.success(t("deleted")); load();
   };
 
+  const removeLogo = async (c: Client) => {
+    if (!c.logo_url) return;
+    if (!confirm(t("confirm_delete"))) return;
+    try {
+      await supabase.storage.from("documents").remove([c.logo_url]);
+    } catch {}
+    const { error } = await supabase.from("clients").update({ logo_url: null }).eq("id", c.id);
+    if (error) return toast.error(error.message);
+    setLogoUrls((prev) => { const n = { ...prev }; delete n[c.id]; return n; });
+    toast.success(t("deleted")); load();
+  };
+
   const onLogo = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0]; if (!file || !editing) return;
     try {
@@ -117,7 +130,20 @@ function ClientsPage() {
             {filtered.map(c => (
               <TableRow key={c.id} className="cursor-pointer" onClick={() => navigate({ to: "/clients/$clientId", params: { clientId: c.id } })}>
                 <TableCell>
-                  {logoUrls[c.id] ? <img src={logoUrls[c.id]} alt={c.company_name} className="h-10 w-10 rounded object-cover" /> : <div className="h-10 w-10 rounded bg-muted flex items-center justify-center"><Building2 className="h-4 w-4 text-muted-foreground" /></div>}
+                  <ContextMenu>
+                    <ContextMenuTrigger asChild>
+                      <div onClick={(e) => e.stopPropagation()}>
+                        {logoUrls[c.id] ? <img src={logoUrls[c.id]} alt={c.company_name} className="h-10 w-10 rounded object-cover" /> : <div className="h-10 w-10 rounded bg-muted flex items-center justify-center"><Building2 className="h-4 w-4 text-muted-foreground" /></div>}
+                      </div>
+                    </ContextMenuTrigger>
+                    {c.logo_url && (
+                      <ContextMenuContent>
+                        <ContextMenuItem onClick={() => removeLogo(c)} className="text-destructive">
+                          <Trash2 className="h-4 w-4 mr-2" />{t("delete")}
+                        </ContextMenuItem>
+                      </ContextMenuContent>
+                    )}
+                  </ContextMenu>
                 </TableCell>
                 <TableCell className="font-medium">
                   <Link to="/clients/$clientId" params={{ clientId: c.id }} className="hover:underline flex items-center gap-1">
