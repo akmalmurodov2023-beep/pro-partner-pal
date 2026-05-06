@@ -31,14 +31,18 @@ export const Route = createRootRoute({
     meta: [
       { charSet: "utf-8" },
       { name: "viewport", content: "width=device-width, initial-scale=1" },
-      { title: "Lovable App" },
-      { name: "description", content: "Lovable Generated Project" },
+      { title: "PromoBoos Worker" },
+      { name: "description", content: "Worker Hub Pro is a comprehensive platform for managing workers, clients, and financial operations." },
       { name: "author", content: "Lovable" },
-      { property: "og:title", content: "Lovable App" },
-      { property: "og:description", content: "Lovable Generated Project" },
+      { property: "og:title", content: "PromoBoos Worker" },
+      { property: "og:description", content: "Worker Hub Pro is a comprehensive platform for managing workers, clients, and financial operations." },
       { property: "og:type", content: "website" },
       { name: "twitter:card", content: "summary" },
       { name: "twitter:site", content: "@Lovable" },
+      { name: "twitter:title", content: "PromoBoos Worker" },
+      { name: "twitter:description", content: "Worker Hub Pro is a comprehensive platform for managing workers, clients, and financial operations." },
+      { property: "og:image", content: "https://pub-bb2e103a32db4e198524a2e9ed8f35b4.r2.dev/be520643-4d60-4bda-9377-aec9bad59d25/id-preview-8439d59a--4cefbecb-0ddb-48e4-aa2f-548f7056aa04.lovable.app-1778031599893.png" },
+      { name: "twitter:image", content: "https://pub-bb2e103a32db4e198524a2e9ed8f35b4.r2.dev/be520643-4d60-4bda-9377-aec9bad59d25/id-preview-8439d59a--4cefbecb-0ddb-48e4-aa2f-548f7056aa04.lovable.app-1778031599893.png" },
     ],
     links: [
       {
