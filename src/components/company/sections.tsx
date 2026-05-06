@@ -15,7 +15,6 @@ import { uploadFile, openFile, getSignedUrl } from "@/lib/storage";
 import { toast } from "sonner";
 import JSZip from "jszip";
 import { notifyAddedToProject, notifyRemovedFromProject } from "@/lib/notify";
-import { uploadToDrive } from "@/server/gdrive.functions";
 
 export const MONTHS = ["Yan", "Fev", "Mart", "Apr", "May", "Iyun", "Iyul", "Avg", "Sen", "Okt", "Noy", "Dek"];
 
@@ -526,10 +525,12 @@ export function TelegramTab({ clientId }: { clientId: string }) {
         binary += String.fromCharCode.apply(null, Array.from(bytes.subarray(i, i + chunk)) as any);
       }
       const base64 = btoa(binary);
-      const res = await uploadToDrive({
-        data: { fileName: file.name, mimeType: file.type || "application/octet-stream", base64 },
-      });
-      const next = [...driveUrls, res.webViewLink];
+      const { data: res, error: upErr } = await supabase.functions.invoke(
+        "upload-to-drive",
+        { body: { fileName: file.name, mimeType: file.type || "application/octet-stream", base64 } },
+      );
+      if (upErr) throw upErr;
+      const next = [...driveUrls, (res as { webViewLink: string }).webViewLink];
       const { error } = await supabase.from("clients").update({ telegram_drive_urls: next as any }).eq("id", clientId);
       if (error) throw error;
       toast.success("Google Drive'ga yuklandi");
