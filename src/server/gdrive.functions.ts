@@ -1,6 +1,7 @@
 import { createServerFn } from "@tanstack/react-start";
 
 const GATEWAY_URL = "https://connector-gateway.lovable.dev/google_drive";
+const TARGET_FOLDER_ID = "1scnhB_mphbLs_bqQRcXIZj7QOh0dNxkr";
 
 export const uploadToDrive = createServerFn({ method: "POST" })
   .inputValidator((data: { fileName: string; mimeType: string; base64: string }) => data)
@@ -11,7 +12,11 @@ export const uploadToDrive = createServerFn({ method: "POST" })
     if (!GOOGLE_DRIVE_API_KEY) throw new Error("GOOGLE_DRIVE_API_KEY is not configured");
 
     const boundary = "lovable_boundary_" + Math.random().toString(36).slice(2);
-    const metadata = { name: data.fileName, mimeType: data.mimeType };
+    const metadata = {
+      name: data.fileName,
+      mimeType: data.mimeType,
+      parents: [TARGET_FOLDER_ID],
+    };
     const fileBuffer = Buffer.from(data.base64, "base64");
 
     const head =
