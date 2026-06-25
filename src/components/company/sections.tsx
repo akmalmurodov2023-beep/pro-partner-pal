@@ -15,6 +15,7 @@ import { uploadFile, openFile, getSignedUrl } from "@/lib/storage";
 import { toast } from "sonner";
 import JSZip from "jszip";
 import { notifyAddedToProject, notifyRemovedFromProject } from "@/lib/notify";
+import { applyCpaPayment } from "@/lib/cpaSync";
 
 export const MONTHS = ["Yan", "Fev", "Mart", "Apr", "May", "Iyun", "Iyul", "Avg", "Sen", "Okt", "Noy", "Dek"];
 
@@ -356,35 +357,31 @@ export function PaymentsTab({ clientId }: { clientId: string }) {
       target_month: tm,
     };
 
-    // Sync into corresponding CPA monthly_results row (only on insert)
-    if (!editing.id && payload.worker_id) {
-      const { data: mr } = await supabase
-        .from("monthly_results")
-        .select("*")
-        .eq("client_id", clientId)
-        .eq("year", ty)
-        .eq("month", tm)
-        .maybeSingle();
-      if (!mr) {
-        toast.error(t("no_cpa_for_month"));
-        return;
-      }
+    // Sync CPA monthly_results. On edit, reverse old delta before applying new.
+    const oldRow = editing.id ? rows.find(r => r.id === editing.id) : null;
+    if (oldRow && oldRow.worker_id && oldRow.target_year && oldRow.target_month) {
+      const oldName = workers.find(x => x.id === oldRow.worker_id)?.full_name || "";
+      await applyCpaPayment({
+        clientId,
+        year: oldRow.target_year,
+        month: oldRow.target_month,
+        workerName: oldName,
+        delta: -Number(oldRow.amount || 0),
+      });
+    }
+    if (payload.worker_id) {
       const wname = workers.find(x => x.id === payload.worker_id)?.full_name || "";
-      const data: any[] = Array.isArray(mr.results_table_data) ? mr.results_table_data : [];
-      const idx = data.findIndex((r: any) => String(r.worker || "").trim().toLowerCase() === wname.trim().toLowerCase());
-      if (idx === -1) {
-        toast.error(t("blogger_not_in_cpa"));
+      const res = await applyCpaPayment({
+        clientId,
+        year: ty,
+        month: tm,
+        workerName: wname,
+        delta: amount,
+      });
+      if (!res.ok) {
+        toast.error(t(res.error));
         return;
       }
-      if (data[idx].paid_status === "paid" && Number(data[idx].paid_amount || 0) > 0) {
-        if (!confirm(t("already_paid_warning"))) return;
-      }
-      data[idx] = {
-        ...data[idx],
-        paid_amount: Number(data[idx].paid_amount || 0) + amount,
-        paid_status: "paid",
-      };
-      await supabase.from("monthly_results").update({ results_table_data: data }).eq("id", mr.id);
     }
 
     const r = editing.id
@@ -393,7 +390,22 @@ export function PaymentsTab({ clientId }: { clientId: string }) {
     if (r.error) return toast.error(r.error.message);
     toast.success(t("saved")); setOpen(false); load();
   };
-  const del = async (id: string) => { if (!confirm(t("confirm_delete"))) return; await supabase.from("payments").delete().eq("id", id); load(); };
+  const del = async (id: string) => {
+    if (!confirm(t("confirm_delete"))) return;
+    const row = rows.find(r => r.id === id);
+    if (row && row.worker_id && row.target_year && row.target_month) {
+      const wname = workers.find(x => x.id === row.worker_id)?.full_name || "";
+      await applyCpaPayment({
+        clientId,
+        year: row.target_year,
+        month: row.target_month,
+        workerName: wname,
+        delta: -Number(row.amount || 0),
+      });
+    }
+    await supabase.from("payments").delete().eq("id", id);
+    load();
+  };
   const onUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0]; if (!file) return;
     try { const path = await uploadFile("receipts", file); setEditing({ ...editing, receipt_url: path }); } catch (err: any) { toast.error(err.message); }
