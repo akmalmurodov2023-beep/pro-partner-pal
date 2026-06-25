@@ -9,7 +9,7 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Textarea } from "@/components/ui/textarea";
-import { Plus, Upload, FileText, Trash2, ExternalLink, Send, FileArchive, Download, Loader2 } from "lucide-react";
+import { Plus, Upload, FileText, Trash2, ExternalLink, Send, FileArchive, Download, Loader2, Pencil } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { uploadFile, openFile, getSignedUrl } from "@/lib/storage";
 import { toast } from "sonner";
@@ -325,29 +325,87 @@ export function PaymentsTab({ clientId }: { clientId: string }) {
 
   const load = async () => {
     const [p, w] = await Promise.all([
-      supabase.from("payments").select("*").eq("client_id", clientId).order("payment_date", { ascending: false }),
+      supabase.from("payments").select("*").eq("client_id", clientId).order("created_at", { ascending: false }),
       supabase.from("workers").select("id,full_name"),
     ]);
     if (p.data) setRows(p.data); if (w.data) setWorkers(w.data);
   };
   useEffect(() => { load(); }, [clientId]);
 
+  const fmtNum = (n: number | string) => {
+    const num = Number(String(n).replace(/\s/g, "")) || 0;
+    return num.toString().replace(/\B(?=(\d{3})+(?!\d))/g, " ");
+  };
+  const parseNum = (s: string) => Number(String(s).replace(/\s/g, "")) || 0;
+
   const save = async () => {
-    const payload = { client_id: clientId, worker_id: editing.worker_id || null, amount: Number(editing.amount) || 0, payment_date: editing.payment_date, payment_type: editing.payment_type || null, notes: editing.notes || null, receipt_url: editing.receipt_url || null };
-    const r = editing.id ? await supabase.from("payments").update(payload).eq("id", editing.id) : await supabase.from("payments").insert(payload);
+    if (!editing) return;
+    const now = new Date();
+    const ty = Number(editing.target_year) || now.getFullYear();
+    const tm = Number(editing.target_month) || (now.getMonth() + 1);
+    const amount = Number(editing.amount) || 0;
+    const payload: any = {
+      client_id: clientId,
+      worker_id: editing.worker_id || null,
+      amount,
+      payment_date: editing.payment_date || new Date().toISOString().slice(0, 10),
+      payment_type: editing.payment_type || "cash",
+      notes: editing.notes || null,
+      receipt_url: editing.receipt_url || null,
+      target_year: ty,
+      target_month: tm,
+    };
+
+    // Sync into corresponding CPA monthly_results row (only on insert)
+    if (!editing.id && payload.worker_id) {
+      const { data: mr } = await supabase
+        .from("monthly_results")
+        .select("*")
+        .eq("client_id", clientId)
+        .eq("year", ty)
+        .eq("month", tm)
+        .maybeSingle();
+      if (!mr) {
+        toast.error(t("no_cpa_for_month"));
+        return;
+      }
+      const wname = workers.find(x => x.id === payload.worker_id)?.full_name || "";
+      const data: any[] = Array.isArray(mr.results_table_data) ? mr.results_table_data : [];
+      const idx = data.findIndex((r: any) => String(r.worker || "").trim().toLowerCase() === wname.trim().toLowerCase());
+      if (idx === -1) {
+        toast.error(t("blogger_not_in_cpa"));
+        return;
+      }
+      if (data[idx].paid_status === "paid" && Number(data[idx].paid_amount || 0) > 0) {
+        if (!confirm(t("already_paid_warning"))) return;
+      }
+      data[idx] = {
+        ...data[idx],
+        paid_amount: Number(data[idx].paid_amount || 0) + amount,
+        paid_status: "paid",
+      };
+      await supabase.from("monthly_results").update({ results_table_data: data }).eq("id", mr.id);
+    }
+
+    const r = editing.id
+      ? await supabase.from("payments").update(payload).eq("id", editing.id)
+      : await supabase.from("payments").insert(payload);
     if (r.error) return toast.error(r.error.message);
     toast.success(t("saved")); setOpen(false); load();
   };
   const del = async (id: string) => { if (!confirm(t("confirm_delete"))) return; await supabase.from("payments").delete().eq("id", id); load(); };
   const onUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0]; if (!file) return;
-    try { const path = await uploadFile(`receipts/${clientId}`, file); setEditing({ ...editing, receipt_url: path }); } catch (err: any) { toast.error(err.message); }
+    try { const path = await uploadFile("receipts", file); setEditing({ ...editing, receipt_url: path }); } catch (err: any) { toast.error(err.message); }
   };
   const workerName = (id: string | null) => workers.find(w => w.id === id)?.full_name || "—";
 
+  const now = new Date();
+  const years = Array.from({ length: 6 }, (_, i) => now.getFullYear() - 2 + i);
+
   return (
     <div>
-      <div className="flex justify-end mb-3"><Button onClick={() => { setEditing({ payment_date: new Date().toISOString().slice(0, 10), amount: 0 }); setOpen(true); }}><Plus className="h-4 w-4 mr-2" />{t("add")}</Button></div>
+      <div className="flex justify-end mb-3"><Button onClick={() => { setEditing({ payment_date: new Date().toISOString().slice(0, 10), amount: 0, payment_type: "cash", target_year: now.getFullYear(), target_month: now.getMonth() + 1 }); setOpen(true); }}><Plus className="h-4 w-4 mr-2" />{t("add")}</Button></div>
       <div className="border bg-card overflow-x-auto">
         <Table>
           <TableHeader><TableRow><TableHead>{t("date")}</TableHead><TableHead>{t("worker")}</TableHead><TableHead>{t("amount")}</TableHead><TableHead>{t("payment_type")}</TableHead><TableHead>{t("receipt")}</TableHead><TableHead className="text-right">{t("actions")}</TableHead></TableRow></TableHeader>
@@ -357,11 +415,11 @@ export function PaymentsTab({ clientId }: { clientId: string }) {
               <TableRow key={p.id}>
                 <TableCell>{p.payment_date}</TableCell>
                 <TableCell>{workerName(p.worker_id)}</TableCell>
-                <TableCell>{Number(p.amount).toLocaleString()}</TableCell>
-                <TableCell>{p.payment_type}</TableCell>
+                <TableCell className="font-medium">{fmtNum(p.amount)}</TableCell>
+                <TableCell>{p.payment_type === "card" ? t("card") : p.payment_type === "cash" ? t("cash") : (p.payment_type || "—")}</TableCell>
                 <TableCell>{p.receipt_url ? <Button size="sm" variant="ghost" onClick={() => openFile(p.receipt_url)}><FileText className="h-4 w-4" /></Button> : "—"}</TableCell>
                 <TableCell className="text-right">
-                  <Button size="icon" variant="ghost" onClick={() => { setEditing(p); setOpen(true); }}><FileText className="h-4 w-4" /></Button>
+                  <Button size="icon" variant="ghost" onClick={() => { setEditing(p); setOpen(true); }}><Pencil className="h-4 w-4" /></Button>
                   <Button size="icon" variant="ghost" onClick={() => del(p.id)}><Trash2 className="h-4 w-4" /></Button>
                 </TableCell>
               </TableRow>
@@ -382,8 +440,28 @@ export function PaymentsTab({ clientId }: { clientId: string }) {
                   <SelectContent>{workers.map(w => <SelectItem key={w.id} value={w.id}>{w.full_name}</SelectItem>)}</SelectContent>
                 </Select>
               </div>
-              <div><Label>{t("amount")}</Label><Input type="number" value={editing.amount || 0} onChange={(e) => setEditing({ ...editing, amount: e.target.value })} /></div>
-              <div><Label>{t("payment_type")}</Label><Input value={editing.payment_type || ""} onChange={(e) => setEditing({ ...editing, payment_type: e.target.value })} /></div>
+              <div><Label>{t("amount")}</Label><Input inputMode="numeric" value={fmtNum(editing.amount ?? 0)} onChange={(e) => setEditing({ ...editing, amount: parseNum(e.target.value) })} /></div>
+              <div><Label>{t("target_month")}</Label>
+                <div className="grid grid-cols-2 gap-2">
+                  <Select value={String(editing.target_year || now.getFullYear())} onValueChange={(v) => setEditing({ ...editing, target_year: Number(v) })}>
+                    <SelectTrigger><SelectValue /></SelectTrigger>
+                    <SelectContent>{years.map(y => <SelectItem key={y} value={String(y)}>{y}</SelectItem>)}</SelectContent>
+                  </Select>
+                  <Select value={String(editing.target_month || now.getMonth() + 1)} onValueChange={(v) => setEditing({ ...editing, target_month: Number(v) })}>
+                    <SelectTrigger><SelectValue /></SelectTrigger>
+                    <SelectContent>{MONTHS.map((m, i) => <SelectItem key={i} value={String(i + 1)}>{m}</SelectItem>)}</SelectContent>
+                  </Select>
+                </div>
+              </div>
+              <div><Label>{t("payment_type")}</Label>
+                <Select value={editing.payment_type || "cash"} onValueChange={(v) => setEditing({ ...editing, payment_type: v })}>
+                  <SelectTrigger><SelectValue /></SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="cash">{t("cash")}</SelectItem>
+                    <SelectItem value="card">{t("card")}</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
               <div><Label>{t("notes")}</Label><Textarea value={editing.notes || ""} onChange={(e) => setEditing({ ...editing, notes: e.target.value })} /></div>
               <div><Label>{t("receipt")}</Label>
                 <div className="flex items-center gap-2">
