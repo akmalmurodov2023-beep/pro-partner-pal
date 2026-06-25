@@ -15,6 +15,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { uploadFile, openFile } from "@/lib/storage";
 import { toast } from "sonner";
 import { MONTHS } from "@/components/company/sections";
+import { applyCpaPayment } from "@/lib/cpaSync";
 
 export const Route = createFileRoute("/payments")({ component: () => <AppLayout><Payments /></AppLayout> });
 
@@ -66,35 +67,31 @@ function Payments() {
       target_month: tm,
     };
 
-    // Sync into corresponding CPA monthly_results row
-    if (!editing.id && payload.client_id && payload.worker_id) {
-      const { data: mr } = await supabase
-        .from("monthly_results")
-        .select("*")
-        .eq("client_id", payload.client_id)
-        .eq("year", ty)
-        .eq("month", tm)
-        .maybeSingle();
-      if (!mr) {
-        toast.error(t("no_cpa_for_month"));
-        return;
-      }
+    // Sync CPA monthly_results. For edit, reverse the old row first.
+    const oldRow = editing.id ? rows.find(r => r.id === editing.id) : null;
+    if (oldRow && oldRow.client_id && oldRow.worker_id && oldRow.target_year && oldRow.target_month) {
+      const oldName = workers.find(x => x.id === oldRow.worker_id)?.full_name || "";
+      await applyCpaPayment({
+        clientId: oldRow.client_id,
+        year: oldRow.target_year,
+        month: oldRow.target_month,
+        workerName: oldName,
+        delta: -Number(oldRow.amount || 0),
+      });
+    }
+    if (payload.client_id && payload.worker_id) {
       const wname = workers.find(x => x.id === payload.worker_id)?.full_name || "";
-      const data: any[] = Array.isArray(mr.results_table_data) ? mr.results_table_data : [];
-      const idx = data.findIndex((r: any) => String(r.worker || "").trim().toLowerCase() === wname.trim().toLowerCase());
-      if (idx === -1) {
-        toast.error(t("blogger_not_in_cpa"));
+      const res = await applyCpaPayment({
+        clientId: payload.client_id,
+        year: ty,
+        month: tm,
+        workerName: wname,
+        delta: payload.amount,
+      });
+      if (!res.ok) {
+        toast.error(t(res.error));
         return;
       }
-      if (data[idx].paid_status === "paid" && Number(data[idx].paid_amount || 0) > 0) {
-        if (!confirm(t("already_paid_warning"))) return;
-      }
-      data[idx] = {
-        ...data[idx],
-        paid_amount: Number(data[idx].paid_amount || 0) + payload.amount,
-        paid_status: "paid",
-      };
-      await supabase.from("monthly_results").update({ results_table_data: data }).eq("id", mr.id);
     }
 
     const r = editing.id
@@ -106,6 +103,17 @@ function Payments() {
 
   const del = async (id: string) => {
     if (!confirm(t("confirm_delete"))) return;
+    const row = rows.find(r => r.id === id);
+    if (row && row.client_id && row.worker_id && row.target_year && row.target_month) {
+      const wname = workers.find(x => x.id === row.worker_id)?.full_name || "";
+      await applyCpaPayment({
+        clientId: row.client_id,
+        year: row.target_year,
+        month: row.target_month,
+        workerName: wname,
+        delta: -Number(row.amount || 0),
+      });
+    }
     await supabase.from("payments").delete().eq("id", id);
     load();
   };
